@@ -2,9 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/instructure/truss-cli/truss"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // setupCmd represents the setup command
@@ -13,8 +14,10 @@ var setupCmd = &cobra.Command{
 	Short: "Ensure your truss cli is ready",
 	// Long: `TODO`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("setup called", args)
-		fmt.Println("clusters : ", viper.Get("clusters"))
+		if err := truss.Setup(); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	},
 }
 
