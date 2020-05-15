@@ -16,3 +16,11 @@ cobra add my-new-command
 ```
 
 [1]: https://github.com/spf13/cobra#installing
+
+### Publish release
+
+Update version in Makefile. Commit to master.
+
+```sh
+make release
+```
