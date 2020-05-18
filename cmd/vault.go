@@ -2,35 +2,38 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/instructure/truss-cli/truss"
 	"github.com/spf13/cobra"
 )
 
-// vaultCmd represents the vault command
 var vaultCmd = &cobra.Command{
 	Use:   "vault",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "A wrapper around hashicorp vault",
+	Long: `This is useful when your vault is not exposed publicly.
+As it will port-forward to the service and call aws auth`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("vault called")
+
+		env, err := cmd.Flags().GetString("env")
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// println("env", env)
+		// TODO pull from config
+		contexts := map[string]string{
+			"": "cluster-admin@truss-nonprod-cmh-shared-cluster",
+		}
+		context := contexts[env]
+		err = truss.Vault(context).Run(args)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(vaultCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// vaultCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// vaultCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

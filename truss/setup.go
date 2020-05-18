@@ -3,22 +3,19 @@ package truss
 import (
 	"fmt"
 	"os/exec"
-
-	"github.com/spf13/viper"
 )
 
 // Setup set up
-func Setup() error {
-	if err := checkDependencies(); err != nil {
+func Setup(dependencies *[]string) error {
+	if err := checkDependencies(dependencies); err != nil {
 		return err
 	}
 	return nil
 }
 
-func checkDependencies() error {
+func checkDependencies(dependencies *[]string) error {
 	missingDependencies := []string{}
-	for _, dPtr := range viper.Get("dependencies").([]interface{}) {
-		d := dPtr.(string)
+	for _, d := range *dependencies {
 		if _, err := exec.LookPath(d); err != nil {
 			missingDependencies = append(missingDependencies, d)
 		}
