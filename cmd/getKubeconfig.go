@@ -1,36 +1,62 @@
 package cmd
 
 import (
-	"fmt"
+	"os"
 
+	"github.com/instructure/truss-cli/truss"
+	homedir "github.com/mitchellh/go-homedir"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // getKubeconfigCmd represents the getKubeconfig command
 var getKubeconfigCmd = &cobra.Command{
-	Use:   "getKubeconfig",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Use:   "get-kubeconfig",
+	Short: "Get Kubeconfigs from source",
+	Long: `
+get-kubeconfig:
+  s3:
+    bucket: my-aws-bucket
+    region: us-east-1
+`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("getKubeconfig called")
+		config := viper.GetStringMap("get-kubeconfig")
+
+		dest, ok := config["dest"].(string)
+		if !ok {
+
+			home, err := homedir.Dir()
+			if err != nil {
+				log.Errorln(err)
+				os.Exit(1)
+			}
+			dest = home + "/.kube/"
+		}
+
+		s3 := config["s3"]
+		if s3 != nil {
+			s3Config, ok := s3.(map[string]interface{})
+			if !ok {
+				log.Errorln("invalid s3 config")
+				os.Exit(1)
+			}
+
+			bucket, ok := s3Config["bucket"].(string)
+			if !ok {
+				log.Errorln("s3 config must have bucket name")
+				os.Exit(1)
+			}
+			if err := truss.GetKubeconfigS3(bucket, dest).Fetch(); err != nil {
+				log.Errorln(err)
+				os.Exit(1)
+			}
+		}
+		os.Exit(0)
+
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(getKubeconfigCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// getKubeconfigCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// getKubeconfigCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
