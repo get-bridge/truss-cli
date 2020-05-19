@@ -2,9 +2,9 @@ package truss
 
 import (
 	"errors"
+	"log"
 	"os"
 	"os/exec"
-	"time"
 )
 
 // VaultCmd wrapper for hashicorp vault
@@ -26,14 +26,11 @@ func (vault *VaultCmd) Run(args []string) error {
 		return err
 	}
 
-	// TODO make configurable
-	err = kubectl.PortForward("-n=vault", "service/vault", "8200")
+	err = kubectl.PortForward("8200", "vault", "service/vault")
 	if err != nil {
 		return err
 	}
 	defer kubectl.ClosePortForward()
-	// TODO better way to know when portforward is ready
-	time.Sleep(5 * time.Second)
 	// TODO make configurable
 	// rapture assume arn:aws:iam::127178877223:role/xacct/ops-admin
 	err = login("login", "-method=aws", "role=admin")
@@ -45,7 +42,7 @@ func (vault *VaultCmd) Run(args []string) error {
 	if err != nil {
 		return err
 	}
-	println(string(output))
+	log.Println(string(output))
 	return nil
 }
 

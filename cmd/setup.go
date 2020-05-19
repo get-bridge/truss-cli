@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/instructure/truss-cli/truss"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -15,27 +15,27 @@ var setupCmd = &cobra.Command{
 	Long: `Dependencies are configured using 'dependencies' field in configfile.
 
 dependencies:
-  - kubectl
-  - sshuttle
-	- vault
+- kubectl
+- sshuttle
+- vault
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		dependenciesPtr, ok := viper.Get("dependencies").([]interface{})
 		if !ok {
-			fmt.Println("invalid dependency configuration")
+			log.Errorln("invalid dependency configuration")
 			os.Exit(1)
 		}
 		dependencies := []string{}
 		for _, d := range dependenciesPtr {
 			dependencyStr, ok := d.(string)
 			if !ok {
-				fmt.Println("invalid dependency type", d)
+				log.Errorln("invalid dependency type", d)
 				os.Exit(1)
 			}
 			dependencies = append(dependencies, dependencyStr)
 		}
 		if err := truss.Setup(&dependencies); err != nil {
-			fmt.Println(err)
+			log.Errorln(err)
 			os.Exit(1)
 		}
 	},
