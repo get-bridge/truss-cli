@@ -51,9 +51,9 @@ get-kubeconfig:
 				log.Errorln(err)
 				os.Exit(1)
 			}
+		} else {
+			log.Warnln("get-kubeconfig not configured")
 		}
-		os.Exit(0)
-
 	},
 }
 

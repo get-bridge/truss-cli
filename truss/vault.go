@@ -2,7 +2,6 @@ package truss
 
 import (
 	"errors"
-	"log"
 	"os"
 	"os/exec"
 )
@@ -20,30 +19,29 @@ func Vault(context string) *VaultCmd {
 }
 
 // Run run command
-func (vault *VaultCmd) Run(args []string) error {
+func (vault *VaultCmd) Run(args []string) ([]byte, error) {
 	kubectl, err := Kubectl(vault.Context)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = kubectl.PortForward("8200", "vault", "service/vault")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer kubectl.ClosePortForward()
 	// TODO make configurable
 	// rapture assume arn:aws:iam::127178877223:role/xacct/ops-admin
 	err = login("login", "-method=aws", "role=admin")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	output, err := execVault(args...)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	log.Println(string(output))
-	return nil
+	return output, nil
 }
 
 func login(arg ...string) error {

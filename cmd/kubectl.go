@@ -1,8 +1,10 @@
 package cmd
 
 import (
-	"fmt"
+	"os"
 
+	"github.com/instructure/truss-cli/truss"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -12,20 +14,28 @@ var kubectlCmd = &cobra.Command{
 	Short: "Proxy commands to kubectl",
 	// Long: `TODO...`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("kubectl called")
+		context, err := getKubeContext(cmd, args)
+		if err != nil {
+			log.Errorln(err)
+			os.Exit(1)
+		}
+
+		kubectl, err := truss.Kubectl(context)
+		if err != nil {
+			log.Errorln(err)
+			os.Exit(1)
+		}
+		output, err := kubectl.Run(args...)
+		if err != nil {
+			log.Errorln(err)
+			os.Exit(1)
+		}
+		log.Println(string(output))
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(kubectlCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// kubectlCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// kubectlCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	kubectlCmd.Flags().SetInterspersed(false)
 }

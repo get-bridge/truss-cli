@@ -6,6 +6,20 @@ CLI to help you manage many k8s clusters
 
 ### Install
 
+#### Mac Homebrew
+
+```sh
+brew install instructure/truss-cli/truss-cli
+```
+
+#### GO
+
+```sh
+go get github.com/instructure/truss-cli truss
+```
+
+### Development
+
 We are using [cobra][1] for cli parsing. For ease in
 adding new commands install the cobra cli.
 

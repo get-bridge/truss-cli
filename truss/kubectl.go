@@ -55,6 +55,16 @@ func (kubectl *KubectlCmd) ClosePortForward() error {
 	return kubectl.portForwardCmd.Process.Signal(syscall.SIGTERM)
 }
 
+// Run kubectl
+func (kubectl *KubectlCmd) Run(arg ...string) ([]byte, error) {
+	bytes, err := exec.Command("kubectl", arg...).Output()
+	if err != nil {
+		return nil, errors.New(string(err.(*exec.ExitError).Stderr))
+	}
+
+	return bytes, nil
+}
+
 func waitForPort(port string) {
 	log.Debugln("Waiting for port", port)
 	timeout := 15
