@@ -8,33 +8,29 @@ import (
 
 // VaultCmd wrapper for hashicorp vault
 type VaultCmd struct {
-	Context string
+	kubectl *KubectlCmd
+	auth    VaultAuth
 }
 
 // Vault wrapper for hashicorp vault
-func Vault(context string) *VaultCmd {
+func Vault(kubectl *KubectlCmd, auth VaultAuth) *VaultCmd {
 	return &VaultCmd{
-		Context: context,
+		kubectl: kubectl,
+		auth:    auth,
 	}
 }
 
 // Run run command
 func (vault *VaultCmd) Run(args []string) ([]byte, error) {
-	kubectl, err := Kubectl(vault.Context)
-	if err != nil {
+	if err := vault.kubectl.PortForward("8200", "vault", "service/vault"); err != nil {
 		return nil, err
 	}
+	defer vault.kubectl.ClosePortForward()
 
-	err = kubectl.PortForward("8200", "vault", "service/vault")
-	if err != nil {
-		return nil, err
-	}
-	defer kubectl.ClosePortForward()
-	// TODO make configurable
-	// rapture assume arn:aws:iam::127178877223:role/xacct/ops-admin
-	err = login("login", "-method=aws", "role=admin")
-	if err != nil {
-		return nil, err
+	if vault.auth != nil {
+		if err := vault.auth.Login(); err != nil {
+			return nil, err
+		}
 	}
 
 	output, err := execVault(args...)
@@ -42,11 +38,6 @@ func (vault *VaultCmd) Run(args []string) ([]byte, error) {
 		return nil, err
 	}
 	return output, nil
-}
-
-func login(arg ...string) error {
-	_, err := execVault(arg...)
-	return err
 }
 
 func execVault(arg ...string) ([]byte, error) {

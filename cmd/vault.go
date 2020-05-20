@@ -6,6 +6,7 @@ import (
 	"github.com/instructure/truss-cli/truss"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var vaultCmd = &cobra.Command{
@@ -20,7 +21,23 @@ As it will port-forward to the service and call aws auth`,
 			os.Exit(1)
 		}
 
-		output, err := truss.Vault(context).Run(args)
+		var vaultAuth truss.VaultAuth
+
+		vaultConfig := viper.GetStringMap("vault")
+		authConfig, ok := vaultConfig["auth"].(map[string]interface{})
+		if ok {
+			awsConfig, ok := authConfig["aws"].(map[string]string)
+			if ok {
+				vaultAuth = truss.VaultAuthAWS(awsConfig["vaultRole"], awsConfig["awsRole"])
+			}
+		}
+
+		kubectl, err := truss.Kubectl(context)
+		if err != nil {
+			log.Errorln(err)
+			os.Exit(1)
+		}
+		output, err := truss.Vault(kubectl, vaultAuth).Run(args)
 		if err != nil {
 			log.Errorln(err)
 			os.Exit(1)
