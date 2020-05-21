@@ -3,6 +3,7 @@ package truss
 import (
 	"errors"
 	"net"
+	"os"
 	"os/exec"
 	"syscall"
 	"time"
@@ -12,28 +13,15 @@ import (
 
 // KubectlCmd wrapper for kubectl
 type KubectlCmd struct {
+	kubeconfig     string
 	portForwardCmd *exec.Cmd
 }
 
 // Kubectl wrapper for kubectl
-func Kubectl(context string) (*KubectlCmd, error) {
-	kubectl := &KubectlCmd{}
-	if context != "" {
-		if err := kubectl.UseContext(context); err != nil {
-			return nil, err
-		}
+func Kubectl(kubeconfig string) *KubectlCmd {
+	return &KubectlCmd{
+		kubeconfig: kubeconfig,
 	}
-	return kubectl, nil
-}
-
-// UseContext kubectl config use-context
-func (*KubectlCmd) UseContext(context string) error {
-	log.Debugln("Using context ", context)
-	cmd := exec.Command("kubectl", "config", "use-context", context)
-	if _, err := cmd.Output(); err != nil {
-		return errors.New(string(err.(*exec.ExitError).Stderr))
-	}
-	return nil
 }
 
 // PortForward kubectl port-forward
@@ -41,6 +29,11 @@ func (kubectl *KubectlCmd) PortForward(port string, namespace string, target str
 	log.Debugln("Opening connection port forward for", port)
 	argsWithCmd := []string{"port-forward", "-n=" + namespace, target, port}
 	kubectl.portForwardCmd = exec.Command("kubectl", argsWithCmd...)
+
+	if kubectl.kubeconfig != "" {
+		kubectl.portForwardCmd.Env = append(os.Environ(), "KUBECONFIG="+kubectl.kubeconfig)
+	}
+
 	if err := kubectl.portForwardCmd.Start(); err != nil {
 		return errors.New(string(err.(*exec.ExitError).Stderr))
 	}
@@ -57,7 +50,13 @@ func (kubectl *KubectlCmd) ClosePortForward() error {
 
 // Run kubectl
 func (kubectl *KubectlCmd) Run(arg ...string) ([]byte, error) {
-	bytes, err := exec.Command("kubectl", arg...).Output()
+	cmd := exec.Command("kubectl", arg...)
+
+	if kubectl.kubeconfig != "" {
+		cmd.Env = append(os.Environ(), "KUBECONFIG="+kubectl.kubeconfig)
+	}
+
+	bytes, err := cmd.Output()
 	if err != nil {
 		return nil, errors.New(string(err.(*exec.ExitError).Stderr))
 	}
