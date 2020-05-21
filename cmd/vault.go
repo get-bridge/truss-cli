@@ -15,7 +15,7 @@ var vaultCmd = &cobra.Command{
 	Long: `This is useful when your vault is not exposed publicly.
 As it will port-forward to the service and call aws auth`,
 	Run: func(cmd *cobra.Command, args []string) {
-		context, err := getKubeContext(cmd, args)
+		kubeconfig, err := getKubeconfig(cmd, args)
 		if err != nil {
 			log.Errorln(err)
 			os.Exit(1)
@@ -26,17 +26,15 @@ As it will port-forward to the service and call aws auth`,
 		vaultConfig := viper.GetStringMap("vault")
 		authConfig, ok := vaultConfig["auth"].(map[string]interface{})
 		if ok {
-			awsConfig, ok := authConfig["aws"].(map[string]string)
+			awsConfig, ok := authConfig["aws"].(map[string]interface{})
 			if ok {
-				vaultAuth = truss.VaultAuthAWS(awsConfig["vaultRole"], awsConfig["awsRole"])
+				vaultRole := awsConfig["vaultrole"].(string)
+				awsRole := awsConfig["awsrole"].(string)
+				vaultAuth = truss.VaultAuthAWS(vaultRole, awsRole)
 			}
 		}
 
-		kubectl, err := truss.Kubectl(context)
-		if err != nil {
-			log.Errorln(err)
-			os.Exit(1)
-		}
+		kubectl := truss.Kubectl(kubeconfig)
 		output, err := truss.Vault(kubectl, vaultAuth).Run(args)
 		if err != nil {
 			log.Errorln(err)

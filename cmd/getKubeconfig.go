@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/instructure/truss-cli/truss"
-	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -21,17 +20,12 @@ get-kubeconfig:
     region: us-east-1
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		config := viper.GetStringMap("get-kubeconfig")
+		config := viper.GetStringMap("kubeconfigfiles")
 
-		dest, ok := config["dest"].(string)
-		if !ok {
-
-			home, err := homedir.Dir()
-			if err != nil {
-				log.Errorln(err)
-				os.Exit(1)
-			}
-			dest = home + "/.kube/"
+		dest, err := getKubeDir()
+		if err != nil {
+			log.Errorln(err)
+			os.Exit(1)
 		}
 
 		s3 := config["s3"]
@@ -51,8 +45,6 @@ get-kubeconfig:
 				log.Errorln(err)
 				os.Exit(1)
 			}
-		} else {
-			log.Warnln("get-kubeconfig not configured")
 		}
 	},
 }

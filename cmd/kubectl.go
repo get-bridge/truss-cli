@@ -14,18 +14,13 @@ var kubectlCmd = &cobra.Command{
 	Short: "Proxy commands to kubectl",
 	// Long: `TODO...`,
 	Run: func(cmd *cobra.Command, args []string) {
-		context, err := getKubeContext(cmd, args)
+		kubeconfig, err := getKubeconfig(cmd, args)
 		if err != nil {
 			log.Errorln(err)
 			os.Exit(1)
 		}
 
-		kubectl, err := truss.Kubectl(context)
-		if err != nil {
-			log.Errorln(err)
-			os.Exit(1)
-		}
-		output, err := kubectl.Run(args...)
+		output, err := truss.Kubectl(kubeconfig).Run(args...)
 		if err != nil {
 			log.Errorln(err)
 			os.Exit(1)
