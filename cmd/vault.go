@@ -1,36 +1,51 @@
 package cmd
 
 import (
-	"fmt"
+	"os"
 
+	"github.com/instructure/truss-cli/truss"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-// vaultCmd represents the vault command
 var vaultCmd = &cobra.Command{
 	Use:   "vault",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "A wrapper around hashicorp vault",
+	Long: `This is useful when your vault is not exposed publicly.
+As it will port-forward to the service and call aws auth`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("vault called")
+		context, err := getKubeContext(cmd, args)
+		if err != nil {
+			log.Errorln(err)
+			os.Exit(1)
+		}
+
+		var vaultAuth truss.VaultAuth
+
+		vaultConfig := viper.GetStringMap("vault")
+		authConfig, ok := vaultConfig["auth"].(map[string]interface{})
+		if ok {
+			awsConfig, ok := authConfig["aws"].(map[string]string)
+			if ok {
+				vaultAuth = truss.VaultAuthAWS(awsConfig["vaultRole"], awsConfig["awsRole"])
+			}
+		}
+
+		kubectl, err := truss.Kubectl(context)
+		if err != nil {
+			log.Errorln(err)
+			os.Exit(1)
+		}
+		output, err := truss.Vault(kubectl, vaultAuth).Run(args)
+		if err != nil {
+			log.Errorln(err)
+			os.Exit(1)
+		}
+		log.Println(string(output))
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(vaultCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// vaultCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// vaultCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
