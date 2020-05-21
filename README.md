@@ -2,21 +2,51 @@
 
 CLI to help you manage many k8s clusters
 
-## Contributing
+## Configuration
 
-### Install
+Defaults to using a file `~/.truss.yaml` for configuration.
 
-#### Mac Homebrew
+Example:
+
+```yaml
+dependencies:
+  - kubectl
+  - sshuttle
+  - vault
+kubeconfigfiles:
+  s3:
+    bucket: my-bucket-with-kubeconfigs
+    region: us-east-2
+environments:
+  edge-cmh: kubeconfig-truss-nonprod-cmh
+  staging-cmh: kubeconfig-truss-nonprod-cmh
+  staging-dub: kubeconfig-truss-nonprod-dub
+  staging-syd: kubeconfig-truss-nonprod-syd
+  prod-cmh: kubeconfig-truss-prod-cmh
+  prod-dub: kubeconfig-truss-prod-dub
+  prod-syd: kubeconfig-truss-prod-syd
+vault:
+  auth:
+    aws:
+      vaultrole: admin
+      awsrole: arn:aws:iam::1234567:role/xacct/my-role
+```
+
+## Install
+
+### Mac Homebrew
 
 ```sh
 brew install instructure/truss-cli/truss-cli
 ```
 
-#### GO
+### GO
 
 ```sh
 go get github.com/instructure/truss-cli truss
 ```
+
+## Contributing
 
 ### Development
 
