@@ -37,13 +37,13 @@ vault:
 ### Mac Homebrew
 
 ```sh
-brew install instructure/truss-cli/truss-cli
+brew install instructure-bridge/truss-cli/truss-cli
 ```
 
 ### GO
 
 ```sh
-go get github.com/instructure/truss-cli truss
+go get github.com/instructure-bridge/truss-cli truss
 ```
 
 ## Contributing
