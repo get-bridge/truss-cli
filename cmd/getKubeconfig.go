@@ -42,7 +42,7 @@ get-kubeconfig:
 				log.Errorln("s3 config must have bucket name")
 				os.Exit(1)
 			}
-			region := s3Config["region"].(string)
+			region, ok := s3Config["region"].(string)
 			if !ok {
 				log.Errorln("s3 config must have region")
 				os.Exit(1)
