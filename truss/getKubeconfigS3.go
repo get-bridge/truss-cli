@@ -1,34 +1,74 @@
 package truss
 
 import (
-	"errors"
 	"fmt"
-	"os/exec"
+	"os"
+	"path"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	log "github.com/sirupsen/logrus"
 )
 
 // GetKubeconfigS3Cmd command for managing kubeconfigs
 type GetKubeconfigS3Cmd struct {
-	bucket string
-	dest   string
+	awsRole string
+	bucket  string
+	dest    string
+	region  string
 }
 
 // GetKubeconfigS3 return command
-func GetKubeconfigS3(bucket string, dest string) GetKubeconfigCmd {
+func GetKubeconfigS3(awsRole string, bucket string, dest string, region string) GetKubeconfigCmd {
 	return &GetKubeconfigS3Cmd{
-		bucket: bucket,
-		dest:   dest,
+		awsRole: awsRole,
+		bucket:  bucket,
+		dest:    dest,
+		region:  region,
 	}
 }
 
 // Fetch kubeconfigs
 func (config *GetKubeconfigS3Cmd) Fetch() error {
 	log.Infoln("Fetching kubeconfig from s3")
-	bucketSrc := fmt.Sprintf("s3://%s", config.bucket)
-	cmd := exec.Command("aws", "s3", "cp", "--recursive", bucketSrc, config.dest)
-	if _, err := cmd.Output(); err != nil {
-		return errors.New(string(err.(*exec.ExitError).Stderr))
+
+	sess, _ := session.NewSession(&aws.Config{
+		Region: aws.String(config.region)},
+	)
+	if config.awsRole != "" {
+		sess.Config.Credentials = stscreds.NewCredentials(sess, config.awsRole)
 	}
+
+	s3Client := s3.New(sess)
+	objects, err := s3Client.ListObjects(&s3.ListObjectsInput{
+		Bucket: aws.String(config.bucket),
+	})
+	if err != nil {
+		return err
+	}
+
+	downloader := s3manager.NewDownloader(sess)
+	for _, key := range objects.Contents {
+
+		file, err := os.Create(path.Join(config.dest, *key.Key))
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		_, err = downloader.Download(file,
+			&s3.GetObjectInput{
+				Bucket: aws.String(config.bucket),
+				Key:    key.Key,
+			})
+		if err != nil {
+			return fmt.Errorf("Unable to download from %q, %v", config.bucket, err)
+		}
+		log.Infoln("Downloaded", *key.Key)
+	}
+
 	return nil
 }

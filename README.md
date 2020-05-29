@@ -15,6 +15,7 @@ dependencies:
   - vault
 kubeconfigfiles:
   s3:
+    awsrole: arn:aws:iam::1234567:role/xacct/my-s3-role
     bucket: my-bucket-with-kubeconfigs
     region: us-east-2
 environments:

@@ -36,12 +36,18 @@ get-kubeconfig:
 				os.Exit(1)
 			}
 
+			awsrole := s3Config["awsrole"].(string)
 			bucket, ok := s3Config["bucket"].(string)
 			if !ok {
 				log.Errorln("s3 config must have bucket name")
 				os.Exit(1)
 			}
-			if err := truss.GetKubeconfigS3(bucket, dest).Fetch(); err != nil {
+			region, ok := s3Config["region"].(string)
+			if !ok {
+				log.Errorln("s3 config must have region")
+				os.Exit(1)
+			}
+			if err := truss.GetKubeconfigS3(awsrole, bucket, dest, region).Fetch(); err != nil {
 				log.Errorln(err)
 				os.Exit(1)
 			}
