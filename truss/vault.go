@@ -13,7 +13,7 @@ import (
 type VaultCmd struct {
 	kubectl       *KubectlCmd
 	auth          VaultAuth
-	portForwarded bool
+	portForwarded *string
 }
 
 // Vault wrapper for hashicorp vault
@@ -24,18 +24,44 @@ func Vault(kubectl *KubectlCmd, auth VaultAuth) *VaultCmd {
 	}
 }
 
-// Run run command
-func (vault *VaultCmd) Run(args []string) ([]byte, error) {
+// PortForward instantiates a port-forward for Vaut
+func (vault *VaultCmd) PortForward() (string, error) {
+	if vault.portForwarded != nil {
+		return *vault.portForwarded, nil
+	}
+
 	p, err := freeport.GetFreePort()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	port := strconv.Itoa(p)
+	vault.portForwarded = &port
 
-	if err := vault.kubectl.PortForward("8200", port, "vault", "service/vault"); err != nil {
-		return nil, err
+	return port, vault.kubectl.PortForward("8200", port, "vault", "service/vault")
+}
+
+// ClosePortForward closes the port forward, if any
+func (vault *VaultCmd) ClosePortForward() error {
+	if vault.portForwarded == nil {
+		return nil
 	}
-	defer vault.kubectl.ClosePortForward()
+	return vault.kubectl.ClosePortForward()
+}
+
+// Run run command
+func (vault *VaultCmd) Run(args []string) ([]byte, error) {
+	var port string
+	var err error
+
+	if vault.portForwarded != nil {
+		port = *vault.portForwarded
+	} else {
+		port, err = vault.PortForward()
+		if err != nil {
+			return nil, err
+		}
+		defer vault.ClosePortForward()
+	}
 
 	if vault.auth != nil {
 		if err := vault.auth.Login(port); err != nil {

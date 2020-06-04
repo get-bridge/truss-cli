@@ -39,7 +39,12 @@ var secretsViewCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		out, err := sm.GetDecryptedFromDisk(args[0])
+		vault, err := sm.Vault(args[0])
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		out, err := sm.GetDecryptedFromDisk(vault, args[0])
 		if err != nil {
 			log.Fatal(err)
 		}
