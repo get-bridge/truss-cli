@@ -77,7 +77,7 @@ secrets:
     DB_PASSWORD: a_super_secret_secret
 ```
 
-Running `truss secrets push edge-cmh` will createtwo secrets in Vault, each
+Running `truss secrets push edge-cmh` will create two secrets in Vault, each
 containing their corresponding key-vaule pairs.
 
 - `secrets/bridge/edge/cmh/my-project/web`
@@ -86,8 +86,8 @@ containing their corresponding key-vaule pairs.
 Create multiple environments with `secrets.yaml` and `truss secrets edit *`,
 then you can run `truss secrets push --all` to update all secrets.
 
-> Note: Currently, a new port-forward is instantiated for each invocation of the
-> vault CLI internally. This should be fixed in a future version.
+When in doubt, you can run `truss secrets pull --all` to update the files on
+disk with the values from Vault. Note: this action is destructive!
 
 ## Contributing
 

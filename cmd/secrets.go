@@ -19,7 +19,7 @@ var secretsCmd = &cobra.Command{
 var editPush bool
 var secretsEditCmd = &cobra.Command{
 	Use:   "edit <environment> [-y]",
-	Short: "Edits a given environment's secrets",
+	Short: "Edits a given environment's secrets on disk",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		sm, err := truss.NewSecretsManager(viper.GetString("EDITOR"), getVaultAuth())
@@ -43,7 +43,7 @@ var secretsEditCmd = &cobra.Command{
 
 var secretsViewCmd = &cobra.Command{
 	Use:   "view <environment>",
-	Short: "Views a given environment's secrets",
+	Short: "Views a given environment's secrets on disk",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		sm, err := truss.NewSecretsManager(viper.GetString("EDITOR"), getVaultAuth())
