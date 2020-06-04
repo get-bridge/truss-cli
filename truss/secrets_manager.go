@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -36,15 +35,16 @@ func NewSecretsManager(editor string, vaultAuth VaultAuth) (*SecretsManager, err
 	}, nil
 }
 
-// Edit edits an environments's ecret
-func (m SecretsManager) Edit(environment string) error {
+// Edit edits an environments's secrets
+// Returns true if $EDITOR wrote to the temp file
+func (m SecretsManager) Edit(environment string) (bool, error) {
 	// start port-forward
 	vault, err := m.Vault(environment)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if _, err = vault.PortForward(); err != nil {
-		return err
+		return false, err
 	}
 	defer vault.ClosePortForward()
 
@@ -52,17 +52,20 @@ func (m SecretsManager) Edit(environment string) error {
 	// decrypt it or provide default
 	raw, err := m.GetDecryptedFromDisk(vault, environment)
 	if err != nil {
-		log.Fatal(err)
+		return false, err
 	}
 
 	// save to tmp file
 	tmpFile, err := ioutil.TempFile("", "trussvault-*")
 	if err != nil {
-		return err
+		return false, err
 	}
 	defer os.Remove(tmpFile.Name())
 	tmpFile.Write(raw)
 	tmpFile.Close()
+
+	info, _ := os.Stat(tmpFile.Name())
+	modTimeAtOpen := info.ModTime()
 
 	// vim tmp file
 	cmd := exec.Command(viper.GetString("EDITOR"), tmpFile.Name())
@@ -70,20 +73,23 @@ func (m SecretsManager) Edit(environment string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Run()
 
-	// TODO: check if saved
+	// check if saved
+	info, _ = os.Stat(tmpFile.Name())
+	modTimeAtClose := info.ModTime()
+	if !modTimeAtClose.After(modTimeAtOpen) {
+		return false, nil
+	}
+
 	// encrypt and save to disk
 	raw, err = ioutil.ReadFile(tmpFile.Name())
 	if err != nil {
-		return err
+		return true, err
 	}
-
 	if err := m.EncryptAndSaveToDisk(vault, environment, raw); err != nil {
-		return err
+		return true, err
 	}
 
-	// prompt to push
-
-	return nil
+	return true, nil
 }
 
 // PushAll pushes all secrets for all environments
@@ -166,14 +172,14 @@ func (m SecretsManager) GetDecryptedFromDisk(vault *VaultCmd, environment string
 }
 
 // GetMapFromDisk returns a collection of secrets as a map
-func (m SecretsManager) GetMapFromDisk(vault *VaultCmd, environment string) (map[string]map[string]interface{}, error) {
+func (m SecretsManager) GetMapFromDisk(vault *VaultCmd, environment string) (map[string]map[string]string, error) {
 	raw, err := m.GetDecryptedFromDisk(vault, environment)
 	if err != nil {
 		return nil, err
 	}
 
 	p := struct {
-		Secrets map[string]map[string]interface{} `yaml:"secrets"`
+		Secrets map[string]map[string]string `yaml:"secrets"`
 	}{}
 	if err := yaml.NewDecoder(bytes.NewReader(raw)).Decode(&p); err != nil {
 		return nil, err
@@ -230,7 +236,7 @@ func (m SecretsManager) Encrypt(vault *VaultCmd, environment string, raw []byte)
 }
 
 // Write writes a secret to Vault
-func (m SecretsManager) Write(vault *VaultCmd, environment, dst string, data map[string]interface{}) error {
+func (m SecretsManager) Write(vault *VaultCmd, environment, dst string, data map[string]string) error {
 	e, err := m.Environment(environment)
 	if err != nil {
 		return err

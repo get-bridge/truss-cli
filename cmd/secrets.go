@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/Songmu/prompter"
 	"github.com/instructure-bridge/truss-cli/truss"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -15,8 +16,9 @@ var secretsCmd = &cobra.Command{
 	Short: "Manages synchronizing secrets between Vault and the filesystem",
 }
 
+var editPush bool
 var secretsEditCmd = &cobra.Command{
-	Use:   "edit <environment>",
+	Use:   "edit <environment> [-y]",
 	Short: "Edits a given environment's secrets",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -25,7 +27,17 @@ var secretsEditCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		sm.Edit(args[0])
+		saved, err := sm.Edit(args[0])
+		if err != nil {
+			log.Fatal(err)
+		}
+		if !saved {
+			return
+		}
+
+		if editPush || prompter.YesNo("Push to environment "+args[0]+"?", false) {
+			secretsPushCmd.Run(cmd, args)
+		}
 	},
 }
 
@@ -82,6 +94,7 @@ var secretsPushCmd = &cobra.Command{
 }
 
 func init() {
+	secretsEditCmd.Flags().BoolVarP(&editPush, "push", "y", false, "Push after editing, if saved")
 	secretsPushCmd.Flags().BoolVarP(&pushAll, "all", "a", false, "Push all environments")
 
 	secretsCmd.AddCommand(secretsEditCmd)
