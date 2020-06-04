@@ -124,6 +124,35 @@ func (m SecretsManager) Push(environment string) error {
 	return nil
 }
 
+// PullAll pulls all environments
+func (m SecretsManager) PullAll() error {
+	for env := range m.Environments {
+		if err := m.Pull(env); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Pull updates the file on disk with the vaules from Vault (destructive)
+func (m SecretsManager) Pull(environment string) error {
+	vault, err := m.Vault(environment)
+	if err != nil {
+		return err
+	}
+	if _, err := vault.PortForward(); err != nil {
+		return err
+	}
+	defer vault.ClosePortForward()
+
+	p, err := m.GetMapFromVault(vault, environment)
+	if err != nil {
+		return err
+	}
+
+	return m.WriteMapToDisk(vault, environment, p)
+}
+
 // Kubectl creates a Kubectl client
 func (m SecretsManager) Kubectl(environment string) (*KubectlCmd, error) {
 	config := viper.GetStringMap("kubeconfigfiles")
@@ -186,6 +215,80 @@ func (m SecretsManager) GetMapFromDisk(vault *VaultCmd, environment string) (map
 	}
 
 	return p.Secrets, nil
+}
+
+// GetMapFromVault returns a collection of secrets as a map
+func (m SecretsManager) GetMapFromVault(vault *VaultCmd, environment string) (map[string]map[string]string, error) {
+	e, err := m.Environment(environment)
+	if err != nil {
+		return nil, err
+	}
+
+	out := map[string]map[string]string{}
+
+	list, err := vault.Run([]string{
+		"kv",
+		"list",
+		"-format=yaml",
+		e.Path,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	secrets := []string{}
+	if err := yaml.NewDecoder(bytes.NewReader(list)).Decode(&secrets); err != nil {
+		return nil, err
+	}
+
+	for _, secret := range secrets {
+		get, err := vault.Run([]string{
+			"kv",
+			"get",
+			"-format=yaml",
+			path.Join(e.Path, secret),
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		getData := struct {
+			Data struct {
+				Data map[string]string `yaml:"data"`
+			} `yaml:"data"`
+		}{}
+		if err := yaml.NewDecoder(bytes.NewReader(get)).Decode(&getData); err != nil {
+			return nil, err
+		}
+
+		out[secret] = getData.Data.Data
+	}
+
+	return out, nil
+}
+
+// WriteMapToDisk serializes a collection of secrets and writes them encrypted to disk
+func (m SecretsManager) WriteMapToDisk(vault *VaultCmd, environment string, secrets map[string]map[string]string) error {
+	e, err := m.Environment(environment)
+	if err != nil {
+		return err
+	}
+
+	s := map[string]map[string]map[string]string{
+		"secrets": secrets,
+	}
+
+	y := bytes.NewBuffer(nil)
+	if err := yaml.NewEncoder(y).Encode(s); err != nil {
+		return err
+	}
+
+	enc, err := m.Encrypt(vault, environment, y.Bytes())
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(e.Secret, enc, 0644)
 }
 
 // EncryptAndSaveToDisk encrypts and saves to disk

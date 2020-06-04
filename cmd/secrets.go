@@ -93,13 +93,43 @@ var secretsPushCmd = &cobra.Command{
 	},
 }
 
+var pullAll bool
+var secretsPullCmd = &cobra.Command{
+	Use:   "pull [environment] [-a]",
+	Short: "Pulls a given environment's secrets from its corresponding Vault",
+	Args: func(cmd *cobra.Command, args []string) error {
+		if !pullAll && len(args) != 1 {
+			return errors.New("must specify an environment or --all")
+		}
+		return nil
+	},
+	Run: func(cmd *cobra.Command, args []string) {
+		sm, err := truss.NewSecretsManager(viper.GetString("EDITOR"), getVaultAuth())
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if pullAll {
+			err = sm.PullAll()
+		} else {
+			err = sm.Pull(args[0])
+		}
+
+		if err != nil {
+			log.Fatal(err)
+		}
+	},
+}
+
 func init() {
 	secretsEditCmd.Flags().BoolVarP(&editPush, "push", "y", false, "Push after editing, if saved")
 	secretsPushCmd.Flags().BoolVarP(&pushAll, "all", "a", false, "Push all environments")
+	secretsPullCmd.Flags().BoolVarP(&pullAll, "all", "a", false, "Pull all environments")
 
 	secretsCmd.AddCommand(secretsEditCmd)
 	secretsCmd.AddCommand(secretsViewCmd)
 	secretsCmd.AddCommand(secretsPushCmd)
+	secretsCmd.AddCommand(secretsPullCmd)
 	rootCmd.AddCommand(secretsCmd)
 	viper.SetDefault("EDITOR", "vim")
 }
