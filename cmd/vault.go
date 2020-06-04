@@ -21,27 +21,25 @@ As it will port-forward to the service and call aws auth`,
 			os.Exit(1)
 		}
 
-		var vaultAuth truss.VaultAuth
-
-		vaultConfig := viper.GetStringMap("vault")
-		authConfig, ok := vaultConfig["auth"].(map[string]interface{})
-		if ok {
-			awsConfig, ok := authConfig["aws"].(map[string]interface{})
-			if ok {
-				vaultRole := awsConfig["vaultrole"].(string)
-				awsRole := awsConfig["awsrole"].(string)
-				vaultAuth = truss.VaultAuthAWS(vaultRole, awsRole)
-			}
-		}
-
 		kubectl := truss.Kubectl(kubeconfig)
-		output, err := truss.Vault(kubectl, vaultAuth).Run(args)
+		output, err := truss.Vault(kubectl, getVaultAuth()).Run(args)
 		if err != nil {
 			log.Errorln(err)
 			os.Exit(1)
 		}
 		log.Println(string(output))
 	},
+}
+
+func getVaultAuth() truss.VaultAuth {
+	vaultRole := viper.GetString("vault.auth.aws.vaultrole")
+	awsRole := viper.GetString("vault.auth.aws.awsrole")
+
+	if vaultRole == "" || awsRole == "" {
+		return nil
+	}
+
+	return truss.VaultAuthAWS(vaultRole, awsRole)
 }
 
 func init() {
