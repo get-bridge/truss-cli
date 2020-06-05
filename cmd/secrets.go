@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"log"
 
@@ -79,15 +78,7 @@ var pushAll bool
 var secretsPushCmd = &cobra.Command{
 	Use:   "push [name] [kubeconfig] [-a]",
 	Short: "Pushes a given environment's secrets to its corresponding Vault",
-	Args: func(cmd *cobra.Command, args []string) error {
-		if !pushAll && len(args) != 2 {
-			return errors.New("must specify kubeconfig and name or --all")
-		}
-		if pushAll && len(args) > 0 {
-			return errors.New("can't accept arguments when --all is present")
-		}
-		return nil
-	},
+	Args:  cobra.MaximumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		sm, err := truss.NewSecretsManager(viper.GetString("EDITOR"), getVaultAuth())
 		if err != nil {
@@ -115,12 +106,7 @@ var pullAll bool
 var secretsPullCmd = &cobra.Command{
 	Use:   "pull [name] [kubeconfig] [-a]",
 	Short: "Pulls a given environment's secrets from its corresponding Vault",
-	Args: func(cmd *cobra.Command, args []string) error {
-		if !pullAll && len(args) != 1 {
-			return errors.New("must specify an environment or --all")
-		}
-		return nil
-	},
+	Args:  cobra.MaximumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		sm, err := truss.NewSecretsManager(viper.GetString("EDITOR"), getVaultAuth())
 		if err != nil {
