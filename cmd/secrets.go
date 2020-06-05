@@ -18,16 +18,21 @@ var secretsCmd = &cobra.Command{
 
 var editPush bool
 var secretsEditCmd = &cobra.Command{
-	Use:   "edit <environment> [-y]",
+	Use:   "edit [name] [kubeconfig] [-y]",
 	Short: "Edits a given environment's secrets on disk",
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.MaximumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		sm, err := truss.NewSecretsManager(viper.GetString("EDITOR"), getVaultAuth())
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		saved, err := sm.Edit(args[0])
+		secret, err := findSecret(sm, args, "edit")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		saved, err := sm.Edit(*secret)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -42,21 +47,26 @@ var secretsEditCmd = &cobra.Command{
 }
 
 var secretsViewCmd = &cobra.Command{
-	Use:   "view <environment>",
+	Use:   "view [name] [kubeconfig]",
 	Short: "Views a given environment's secrets on disk",
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.MaximumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		sm, err := truss.NewSecretsManager(viper.GetString("EDITOR"), getVaultAuth())
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		vault, err := sm.Vault(args[0])
+		secret, err := findSecret(sm, args, "view")
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		out, err := sm.GetDecryptedFromDisk(vault, args[0])
+		vault, err := sm.Vault(*secret)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		out, err := sm.GetDecryptedFromDisk(vault, *secret)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -67,11 +77,14 @@ var secretsViewCmd = &cobra.Command{
 
 var pushAll bool
 var secretsPushCmd = &cobra.Command{
-	Use:   "push [environment] [-a]",
+	Use:   "push [name] [kubeconfig] [-a]",
 	Short: "Pushes a given environment's secrets to its corresponding Vault",
 	Args: func(cmd *cobra.Command, args []string) error {
-		if !pushAll && len(args) != 1 {
-			return errors.New("must specify an environment or --all")
+		if !pushAll && len(args) != 2 {
+			return errors.New("must specify kubeconfig and name or --all")
+		}
+		if pushAll && len(args) > 0 {
+			return errors.New("can't accept arguments when --all is present")
 		}
 		return nil
 	},
@@ -84,7 +97,12 @@ var secretsPushCmd = &cobra.Command{
 		if pushAll {
 			err = sm.PushAll()
 		} else {
-			err = sm.Push(args[0])
+			var secret *truss.SecretConfig
+			secret, err = findSecret(sm, args, "push")
+			if err != nil {
+				log.Fatal(err)
+			}
+			err = sm.Push(*secret)
 		}
 
 		if err != nil {
@@ -95,7 +113,7 @@ var secretsPushCmd = &cobra.Command{
 
 var pullAll bool
 var secretsPullCmd = &cobra.Command{
-	Use:   "pull [environment] [-a]",
+	Use:   "pull [name] [kubeconfig] [-a]",
 	Short: "Pulls a given environment's secrets from its corresponding Vault",
 	Args: func(cmd *cobra.Command, args []string) error {
 		if !pullAll && len(args) != 1 {
@@ -112,13 +130,34 @@ var secretsPullCmd = &cobra.Command{
 		if pullAll {
 			err = sm.PullAll()
 		} else {
-			err = sm.Pull(args[0])
+			var secret *truss.SecretConfig
+			secret, err = findSecret(sm, args, "push")
+			if err != nil {
+				log.Fatal(err)
+			}
+			err = sm.Pull(*secret)
 		}
 
 		if err != nil {
 			log.Fatal(err)
 		}
 	},
+}
+
+func findSecret(sm *truss.SecretsManager, args []string, verb string) (*truss.SecretConfig, error) {
+	var name, kubeconfig string
+	if len(args) >= 1 {
+		name = args[0]
+	} else {
+		name = prompter.Choose(fmt.Sprintf("Which secret would you like to %s?", verb), sm.SecretNames(), "")
+	}
+	if len(args) >= 2 {
+		kubeconfig = args[1]
+	} else {
+		kubeconfig = prompter.Choose("For which kubeconfig?", sm.SecretKubeconfigs(name), "")
+	}
+
+	return sm.Secret(name, kubeconfig)
 }
 
 func init() {
