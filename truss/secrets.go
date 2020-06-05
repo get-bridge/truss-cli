@@ -9,7 +9,6 @@ import (
 
 // SecretConfigList represents a list of named SecretConfigs
 type SecretConfigList struct {
-	// Environments   map[string][]SecretConfig `yaml:"environments"`
 	Secrets        []SecretConfig `yaml:"secrets"`
 	TransitKeyName string         `yaml:"transit-key-name"`
 }
