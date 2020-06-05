@@ -16,3 +16,7 @@
 
 dist/
 .envrc
+
+# Secrets
+secrets.yaml
+/secrets

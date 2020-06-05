@@ -14,7 +14,7 @@ var getKubeconfigCmd = &cobra.Command{
 	Use:   "get-kubeconfig",
 	Short: "Get Kubeconfigs from source",
 	Long: `
-get-kubeconfig:
+kubeconfigfiles:
   s3:
     bucket: my-aws-bucket
     region: us-east-1

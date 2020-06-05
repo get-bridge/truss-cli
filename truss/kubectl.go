@@ -25,9 +25,9 @@ func Kubectl(kubeconfig string) *KubectlCmd {
 }
 
 // PortForward kubectl port-forward
-func (kubectl *KubectlCmd) PortForward(port string, namespace string, target string) error {
+func (kubectl *KubectlCmd) PortForward(port, listen, namespace, target string) error {
 	log.Debugln("Opening connection port forward for", port)
-	argsWithCmd := []string{"port-forward", "-n=" + namespace, target, port}
+	argsWithCmd := []string{"port-forward", "-n=" + namespace, target, listen + ":" + port}
 	kubectl.portForwardCmd = exec.Command("kubectl", argsWithCmd...)
 
 	if kubectl.kubeconfig != "" {
@@ -38,7 +38,7 @@ func (kubectl *KubectlCmd) PortForward(port string, namespace string, target str
 		return errors.New(string(err.(*exec.ExitError).Stderr))
 	}
 
-	waitForPort(port)
+	waitForPort(listen)
 
 	return nil
 }

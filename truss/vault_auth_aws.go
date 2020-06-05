@@ -15,7 +15,7 @@ type vaultAuthAWS struct {
 }
 
 // VaultAuthAWS vault auth
-func VaultAuthAWS(vaultRole string, awsRole string) VaultAuth {
+func VaultAuthAWS(vaultRole, awsRole string) VaultAuth {
 	return &vaultAuthAWS{
 		vaultRole: vaultRole,
 		awsRole:   awsRole,
@@ -23,7 +23,7 @@ func VaultAuthAWS(vaultRole string, awsRole string) VaultAuth {
 }
 
 // Login for VaultAuth interface
-func (auth *vaultAuthAWS) Login() error {
+func (auth *vaultAuthAWS) Login(port string) error {
 	// assume aws role
 	sess := session.Must(session.NewSession())
 	creds, err := stscreds.NewCredentials(sess, auth.awsRole).Get()
@@ -33,7 +33,7 @@ func (auth *vaultAuthAWS) Login() error {
 
 	cmd := exec.Command("vault", "login", "-method=aws", "role="+auth.vaultRole)
 	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, "VAULT_ADDR=https://localhost:8200", "VAULT_SKIP_VERIFY=true")
+	cmd.Env = append(cmd.Env, "VAULT_ADDR=https://localhost:"+port, "VAULT_SKIP_VERIFY=true")
 	cmd.Env = append(cmd.Env,
 		"AWS_SECRET_ACCESS_KEY="+creds.SecretAccessKey,
 		"AWS_ACCESS_KEY_ID="+creds.AccessKeyID,

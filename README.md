@@ -47,6 +47,48 @@ brew install instructure-bridge/truss-cli/truss-cli
 go get github.com/instructure-bridge/truss-cli truss
 ```
 
+## Usage
+
+### Secrets
+
+The `truss secrets` command makes it easier to manage secrets in git, and
+synchronize them across multiple Truss Vault servers. Start by creating a
+`secrets.yaml` file.
+
+```yaml
+# secrets.yaml
+transit-key-name: my-project
+environments:
+  edge-cmh: # As declared in ~/.truss.yaml
+    filePath: ./secrets/edge-cmh # Relative to `pwd`
+    vaultPath: secret/bridge/edge/cmh/my-project # Folder for multilpe vault secrets
+```
+
+Then, run `truss secrets edit edge-cmh`. This will open your `$EDITOR` with a
+file containing `secrets: {}`. An example secrets file might look like this:
+
+```yaml
+secrets:
+  web:
+    SOME_API_KEY: a_super_secret_secret
+    CSRF_SECRET: a_super_secret_secret
+  db:
+    DB_USERNAME: root
+    DB_PASSWORD: a_super_secret_secret
+```
+
+Running `truss secrets push edge-cmh` will create two secrets in Vault, each
+containing their corresponding key-vaule pairs.
+
+- `secrets/bridge/edge/cmh/my-project/web`
+- `secrets/bridge/edge/cmh/my-project/db`
+
+Create multiple environments with `secrets.yaml` and `truss secrets edit *`,
+then you can run `truss secrets push --all` to update all secrets.
+
+When in doubt, you can run `truss secrets pull --all` to update the files on
+disk with the values from Vault. Note: this action is destructive!
+
 ## Contributing
 
 ### Development
