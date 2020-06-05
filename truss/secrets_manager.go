@@ -187,12 +187,12 @@ func (m SecretsManager) GetDecryptedFromDisk(vault *VaultCmd, environment string
 		return nil, err
 	}
 
-	_, err = os.Stat(e.Secret)
+	_, err = os.Stat(e.FilePath)
 	if err != nil {
 		return []byte("secrets: {}"), nil
 	}
 
-	encrypted, err := ioutil.ReadFile(e.Secret)
+	encrypted, err := ioutil.ReadFile(e.FilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -230,7 +230,7 @@ func (m SecretsManager) GetMapFromVault(vault *VaultCmd, environment string) (ma
 		"kv",
 		"list",
 		"-format=yaml",
-		e.Path,
+		e.VaultPath,
 	})
 	if err != nil {
 		return nil, err
@@ -246,7 +246,7 @@ func (m SecretsManager) GetMapFromVault(vault *VaultCmd, environment string) (ma
 			"kv",
 			"get",
 			"-format=yaml",
-			path.Join(e.Path, secret),
+			path.Join(e.VaultPath, secret),
 		})
 		if err != nil {
 			return nil, err
@@ -288,7 +288,7 @@ func (m SecretsManager) WriteMapToDisk(vault *VaultCmd, environment string, secr
 		return err
 	}
 
-	return ioutil.WriteFile(e.Secret, enc, 0644)
+	return ioutil.WriteFile(e.FilePath, enc, 0644)
 }
 
 // EncryptAndSaveToDisk encrypts and saves to disk
@@ -303,7 +303,7 @@ func (m SecretsManager) EncryptAndSaveToDisk(vault *VaultCmd, environment string
 		return err
 	}
 
-	return ioutil.WriteFile(e.Secret, enc, 0644)
+	return ioutil.WriteFile(e.FilePath, enc, 0644)
 }
 
 // Decrypt shit
@@ -345,7 +345,7 @@ func (m SecretsManager) Write(vault *VaultCmd, environment, dst string, data map
 		return err
 	}
 
-	args := []string{"kv", "put", path.Join(e.Path, dst)}
+	args := []string{"kv", "put", path.Join(e.VaultPath, dst)}
 	for k, v := range data {
 		args = append(args, fmt.Sprintf("%s=%s", k, v))
 	}

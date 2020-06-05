@@ -60,8 +60,8 @@ synchronize them across multiple Truss Vault servers. Start by creating a
 transit-key-name: my-project
 environments:
   edge-cmh: # As declared in ~/.truss.yaml
-    secret: ./secrets/edge-cmh # Relative to `pwd`
-    path: secret/bridge/edge/cmh/my-project # Folder for multilpe vault secrets
+    filePath: ./secrets/edge-cmh # Relative to `pwd`
+    vaultPath: secret/bridge/edge/cmh/my-project # Folder for multilpe vault secrets
 ```
 
 Then, run `truss secrets edit edge-cmh`. This will open your `$EDITOR` with a

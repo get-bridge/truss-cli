@@ -40,6 +40,6 @@ func (l SecretConfigList) Environment(name string) (*SecretConfig, error) {
 
 // SecretConfig represents a desired Vault synchronization
 type SecretConfig struct {
-	Path   string `yaml:"path"`
-	Secret string `yaml:"secret"`
+	VaultPath string `yaml:"vaultPath"`
+	FilePath  string `yaml:"filePath"`
 }
