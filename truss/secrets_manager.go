@@ -37,9 +37,9 @@ func NewSecretsManager(editor string, vaultAuth VaultAuth) (*SecretsManager, err
 
 // Edit edits an environments's secrets
 // Returns true if $EDITOR wrote to the temp file
-func (m SecretsManager) Edit(environment string) (bool, error) {
+func (m SecretsManager) Edit(secret SecretConfig) (bool, error) {
 	// start port-forward
-	vault, err := m.Vault(environment)
+	vault, err := m.Vault(secret)
 	if err != nil {
 		return false, err
 	}
@@ -50,7 +50,7 @@ func (m SecretsManager) Edit(environment string) (bool, error) {
 
 	// load existing disk value
 	// decrypt it or provide default
-	raw, err := m.GetDecryptedFromDisk(vault, environment)
+	raw, err := m.GetDecryptedFromDisk(vault, secret)
 	if err != nil {
 		return false, err
 	}
@@ -85,7 +85,7 @@ func (m SecretsManager) Edit(environment string) (bool, error) {
 	if err != nil {
 		return true, err
 	}
-	if err := m.EncryptAndSaveToDisk(vault, environment, raw); err != nil {
+	if err := m.EncryptAndSaveToDisk(vault, secret, raw); err != nil {
 		return true, err
 	}
 
@@ -94,8 +94,8 @@ func (m SecretsManager) Edit(environment string) (bool, error) {
 
 // PushAll pushes all secrets for all environments
 func (m SecretsManager) PushAll() error {
-	for env := range m.Environments {
-		if err := m.Push(env); err != nil {
+	for _, secret := range m.Secrets {
+		if err := m.Push(secret); err != nil {
 			return err
 		}
 	}
@@ -103,8 +103,8 @@ func (m SecretsManager) PushAll() error {
 }
 
 // Push pushes secrets to Vaut
-func (m SecretsManager) Push(environment string) error {
-	vault, err := m.Vault(environment)
+func (m SecretsManager) Push(secret SecretConfig) error {
+	vault, err := m.Vault(secret)
 	if err != nil {
 		return err
 	}
@@ -113,21 +113,21 @@ func (m SecretsManager) Push(environment string) error {
 	}
 	defer vault.ClosePortForward()
 
-	secrets, err := m.GetMapFromDisk(vault, environment)
+	secrets, err := m.GetMapFromDisk(vault, secret)
 	if err != nil {
 		return err
 	}
 
 	for path, data := range secrets {
-		m.Write(vault, environment, path, data)
+		m.Write(vault, secret, path, data)
 	}
 	return nil
 }
 
 // PullAll pulls all environments
 func (m SecretsManager) PullAll() error {
-	for env := range m.Environments {
-		if err := m.Pull(env); err != nil {
+	for _, secret := range m.Secrets {
+		if err := m.Pull(secret); err != nil {
 			return err
 		}
 	}
@@ -135,8 +135,8 @@ func (m SecretsManager) PullAll() error {
 }
 
 // Pull updates the file on disk with the vaules from Vault (destructive)
-func (m SecretsManager) Pull(environment string) error {
-	vault, err := m.Vault(environment)
+func (m SecretsManager) Pull(secret SecretConfig) error {
+	vault, err := m.Vault(secret)
 	if err != nil {
 		return err
 	}
@@ -145,16 +145,16 @@ func (m SecretsManager) Pull(environment string) error {
 	}
 	defer vault.ClosePortForward()
 
-	p, err := m.GetMapFromVault(vault, environment)
+	p, err := m.GetMapFromVault(vault, secret)
 	if err != nil {
 		return err
 	}
 
-	return m.WriteMapToDisk(vault, environment, p)
+	return m.WriteMapToDisk(vault, secret, p)
 }
 
 // Kubectl creates a Kubectl client
-func (m SecretsManager) Kubectl(environment string) (*KubectlCmd, error) {
+func (m SecretsManager) Kubectl(secret SecretConfig) (*KubectlCmd, error) {
 	config := viper.GetStringMap("kubeconfigfiles")
 	directory, ok := config["directory"].(string)
 	if !ok {
@@ -165,14 +165,12 @@ func (m SecretsManager) Kubectl(environment string) (*KubectlCmd, error) {
 		directory = home + "/.kube/"
 	}
 
-	environments := viper.GetStringMapString("environments")
-
-	return Kubectl(path.Join(directory, environments[environment])), nil
+	return Kubectl(path.Join(directory, secret.Kubeconfig)), nil
 }
 
 // Vault creates a proxied Vault client
-func (m SecretsManager) Vault(environment string) (*VaultCmd, error) {
-	kubectl, err := m.Kubectl(environment)
+func (m SecretsManager) Vault(secret SecretConfig) (*VaultCmd, error) {
+	kubectl, err := m.Kubectl(secret)
 	if err != nil {
 		return nil, err
 	}
@@ -181,28 +179,23 @@ func (m SecretsManager) Vault(environment string) (*VaultCmd, error) {
 }
 
 // GetDecryptedFromDisk returns the encrypted yaml configuration from disk
-func (m SecretsManager) GetDecryptedFromDisk(vault *VaultCmd, environment string) ([]byte, error) {
-	e, err := m.Environment(environment)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = os.Stat(e.FilePath)
+func (m SecretsManager) GetDecryptedFromDisk(vault *VaultCmd, secret SecretConfig) ([]byte, error) {
+	_, err := os.Stat(secret.FilePath)
 	if err != nil {
 		return []byte("secrets: {}"), nil
 	}
 
-	encrypted, err := ioutil.ReadFile(e.FilePath)
+	encrypted, err := ioutil.ReadFile(secret.FilePath)
 	if err != nil {
 		return nil, err
 	}
 
-	return m.Decrypt(vault, environment, encrypted)
+	return m.Decrypt(vault, encrypted)
 }
 
 // GetMapFromDisk returns a collection of secrets as a map
-func (m SecretsManager) GetMapFromDisk(vault *VaultCmd, environment string) (map[string]map[string]string, error) {
-	raw, err := m.GetDecryptedFromDisk(vault, environment)
+func (m SecretsManager) GetMapFromDisk(vault *VaultCmd, secret SecretConfig) (map[string]map[string]string, error) {
+	raw, err := m.GetDecryptedFromDisk(vault, secret)
 	if err != nil {
 		return nil, err
 	}
@@ -218,19 +211,14 @@ func (m SecretsManager) GetMapFromDisk(vault *VaultCmd, environment string) (map
 }
 
 // GetMapFromVault returns a collection of secrets as a map
-func (m SecretsManager) GetMapFromVault(vault *VaultCmd, environment string) (map[string]map[string]string, error) {
-	e, err := m.Environment(environment)
-	if err != nil {
-		return nil, err
-	}
-
+func (m SecretsManager) GetMapFromVault(vault *VaultCmd, secret SecretConfig) (map[string]map[string]string, error) {
 	out := map[string]map[string]string{}
 
 	list, err := vault.Run([]string{
 		"kv",
 		"list",
 		"-format=yaml",
-		e.VaultPath,
+		secret.VaultPath,
 	})
 	if err != nil {
 		return nil, err
@@ -241,12 +229,12 @@ func (m SecretsManager) GetMapFromVault(vault *VaultCmd, environment string) (ma
 		return nil, err
 	}
 
-	for _, secret := range secrets {
+	for _, s := range secrets {
 		get, err := vault.Run([]string{
 			"kv",
 			"get",
 			"-format=yaml",
-			path.Join(e.VaultPath, secret),
+			path.Join(secret.VaultPath, s),
 		})
 		if err != nil {
 			return nil, err
@@ -261,19 +249,14 @@ func (m SecretsManager) GetMapFromVault(vault *VaultCmd, environment string) (ma
 			return nil, err
 		}
 
-		out[secret] = getData.Data.Data
+		out[s] = getData.Data.Data
 	}
 
 	return out, nil
 }
 
 // WriteMapToDisk serializes a collection of secrets and writes them encrypted to disk
-func (m SecretsManager) WriteMapToDisk(vault *VaultCmd, environment string, secrets map[string]map[string]string) error {
-	e, err := m.Environment(environment)
-	if err != nil {
-		return err
-	}
-
+func (m SecretsManager) WriteMapToDisk(vault *VaultCmd, secret SecretConfig, secrets map[string]map[string]string) error {
 	s := map[string]map[string]map[string]string{
 		"secrets": secrets,
 	}
@@ -283,31 +266,26 @@ func (m SecretsManager) WriteMapToDisk(vault *VaultCmd, environment string, secr
 		return err
 	}
 
-	enc, err := m.Encrypt(vault, environment, y.Bytes())
+	enc, err := m.Encrypt(vault, y.Bytes())
 	if err != nil {
 		return err
 	}
 
-	return ioutil.WriteFile(e.FilePath, enc, 0644)
+	return ioutil.WriteFile(secret.FilePath, enc, 0644)
 }
 
 // EncryptAndSaveToDisk encrypts and saves to disk
-func (m SecretsManager) EncryptAndSaveToDisk(vault *VaultCmd, environment string, raw []byte) error {
-	e, err := m.Environment(environment)
+func (m SecretsManager) EncryptAndSaveToDisk(vault *VaultCmd, secret SecretConfig, raw []byte) error {
+	enc, err := m.Encrypt(vault, raw)
 	if err != nil {
 		return err
 	}
 
-	enc, err := m.Encrypt(vault, environment, raw)
-	if err != nil {
-		return err
-	}
-
-	return ioutil.WriteFile(e.FilePath, enc, 0644)
+	return ioutil.WriteFile(secret.FilePath, enc, 0644)
 }
 
 // Decrypt shit
-func (m SecretsManager) Decrypt(vault *VaultCmd, environment string, encrypted []byte) ([]byte, error) {
+func (m SecretsManager) Decrypt(vault *VaultCmd, encrypted []byte) ([]byte, error) {
 	out, err := vault.Run([]string{
 		"write",
 		"-field=plaintext",
@@ -323,7 +301,7 @@ func (m SecretsManager) Decrypt(vault *VaultCmd, environment string, encrypted [
 }
 
 // Encrypt shit
-func (m SecretsManager) Encrypt(vault *VaultCmd, environment string, raw []byte) ([]byte, error) {
+func (m SecretsManager) Encrypt(vault *VaultCmd, raw []byte) ([]byte, error) {
 	out, err := vault.Run([]string{
 		"write",
 		"-field=ciphertext",
@@ -339,17 +317,12 @@ func (m SecretsManager) Encrypt(vault *VaultCmd, environment string, raw []byte)
 }
 
 // Write writes a secret to Vault
-func (m SecretsManager) Write(vault *VaultCmd, environment, dst string, data map[string]string) error {
-	e, err := m.Environment(environment)
-	if err != nil {
-		return err
-	}
-
-	args := []string{"kv", "put", path.Join(e.VaultPath, dst)}
+func (m SecretsManager) Write(vault *VaultCmd, secret SecretConfig, dst string, data map[string]string) error {
+	args := []string{"kv", "put", path.Join(secret.VaultPath, dst)}
 	for k, v := range data {
 		args = append(args, fmt.Sprintf("%s=%s", k, v))
 	}
 
-	_, err = vault.Run(args)
+	_, err := vault.Run(args)
 	return err
 }

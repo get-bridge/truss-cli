@@ -58,14 +58,28 @@ synchronize them across multiple Truss Vault servers. Start by creating a
 ```yaml
 # secrets.yaml
 transit-key-name: my-project
-environments:
-  edge-cmh: # As declared in ~/.truss.yaml
-    filePath: ./secrets/edge-cmh # Relative to `pwd`
-    vaultPath: secret/bridge/edge/cmh/my-project # Folder for multilpe vault secrets
+secrets:
+  - name: app-1
+    kubeconfig: kubeconfig-truss-nonprod-cmh # relative to `kubeconfigfiles.directory` in `~/.truss.yaml`
+    filePath: ./secrets/edge-cmh # relative to `pwd`
+    vaultPath: secrret/bridge/edge/cmh/app-1 # name of folder for multiple vault secrets
+  - name: app-1
+    kubeconfig: kubeconfig-truss-prod-cmh
+    filePath: ./secrets/prod-cmh
+    vaultPath: secrret/bridge/prod/cmh/app-1
+  - name: app-2
+    kubeconfig: kubeconfig-truss-nonprod-cmh
+    filePath: ./secrets/edge-cmh
+    vaultPath: secrret/bridge/edge/cmh/app-2
+  - name: app-2
+    kubeconfig: kubeconfig-truss-prod-cmh
+    filePath: ./secrets/prod-cmh
+    vaultPath: secrret/bridge/prod/cmh/app-2
 ```
 
-Then, run `truss secrets edit edge-cmh`. This will open your `$EDITOR` with a
-file containing `secrets: {}`. An example secrets file might look like this:
+Then, run `truss secrets edit app-1 kubeconfig-truss-nonprod-cmh`. This will
+open your `$EDITOR` with a file containing `secrets: {}`. An example secrets
+file might look like this:
 
 ```yaml
 secrets:
@@ -77,14 +91,15 @@ secrets:
     DB_PASSWORD: a_super_secret_secret
 ```
 
-Running `truss secrets push edge-cmh` will create two secrets in Vault, each
-containing their corresponding key-vaule pairs.
+Running `truss secrets push app-1 kubeconfig-truss-nonprod-cmh` will create two
+secrets in Vault, each containing their corresponding key-vaule pairs.
 
-- `secrets/bridge/edge/cmh/my-project/web`
-- `secrets/bridge/edge/cmh/my-project/db`
+- `secrets/bridge/edge/cmh/app-1/web`
+- `secrets/bridge/edge/cmh/app-1/db`
 
-Create multiple environments with `secrets.yaml` and `truss secrets edit *`,
-then you can run `truss secrets push --all` to update all secrets.
+Create multiple environments with `secrets.yaml` and
+`truss secrets edit <name> <kubeconfig>`, then you can run
+`truss secrets push --all` to update all secrets.
 
 When in doubt, you can run `truss secrets pull --all` to update the files on
 disk with the values from Vault. Note: this action is destructive!
