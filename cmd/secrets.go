@@ -107,10 +107,10 @@ var secretsPullCmd = &cobra.Command{
 	Use:   "pull [name] [kubeconfig] [-a]",
 	Short: "Pulls a given environment's secrets from its corresponding Vault",
 	Args:  cobra.MaximumNArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		sm, err := truss.NewSecretsManager(viper.GetString("EDITOR"), getVaultAuth())
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		if pullAll {
@@ -125,8 +125,9 @@ var secretsPullCmd = &cobra.Command{
 		}
 
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
+		return nil
 	},
 }
 

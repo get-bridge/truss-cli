@@ -9,10 +9,7 @@ import (
 )
 
 func getKubeconfig(cmd *cobra.Command, args []string) (kubeconfig string, err error) {
-	env, err := cmd.Flags().GetString("env")
-	if err != nil {
-		return
-	}
+	env := viper.GetString("env")
 
 	if env != "" {
 		var kubeconfigDir string

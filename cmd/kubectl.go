@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"os"
-
 	"github.com/instructure-bridge/truss-cli/truss"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -13,19 +11,18 @@ var kubectlCmd = &cobra.Command{
 	Use:   "kubectl",
 	Short: "Proxy commands to kubectl",
 	// Long: `TODO...`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		kubeconfig, err := getKubeconfig(cmd, args)
 		if err != nil {
-			log.Errorln(err)
-			os.Exit(1)
+			return err
 		}
 
 		output, err := truss.Kubectl(kubeconfig).Run(args...)
 		if err != nil {
-			log.Errorln(err)
-			os.Exit(1)
+			return err
 		}
 		log.Println(string(output))
+		return nil
 	},
 }
 

@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"os"
-
 	"github.com/instructure-bridge/truss-cli/truss"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -14,20 +12,19 @@ var vaultCmd = &cobra.Command{
 	Short: "A wrapper around hashicorp vault",
 	Long: `This is useful when your vault is not exposed publicly.
 As it will port-forward to the service and call aws auth`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		kubeconfig, err := getKubeconfig(cmd, args)
 		if err != nil {
-			log.Errorln(err)
-			os.Exit(1)
+			return err
 		}
 
 		kubectl := truss.Kubectl(kubeconfig)
 		output, err := truss.Vault(kubectl, getVaultAuth()).Run(args)
 		if err != nil {
-			log.Errorln(err)
-			os.Exit(1)
+			return err
 		}
 		log.Println(string(output))
+		return nil
 	},
 }
 
