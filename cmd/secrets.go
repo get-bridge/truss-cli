@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/Songmu/prompter"
@@ -21,9 +22,19 @@ func findSecret(sm *truss.SecretsManager, args []string, verb string) (*truss.Se
 	} else {
 		name = prompter.Choose(fmt.Sprintf("Which secret would you like to %s?", verb), sm.SecretNames(), "")
 	}
+
+	var err error
+	kubeconfig, err = getKubeconfigName()
+	if err != nil {
+		return nil, err
+	}
+
 	if len(args) >= 2 {
+		if kubeconfig != "" {
+			return nil, errors.New("do not specify --env and kubeconfig")
+		}
 		kubeconfig = args[1]
-	} else {
+	} else if kubeconfig == "" {
 		kubeconfig = prompter.Choose("For which kubeconfig?", sm.SecretKubeconfigs(name), "")
 	}
 

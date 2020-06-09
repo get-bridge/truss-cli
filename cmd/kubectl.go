@@ -12,7 +12,7 @@ var kubectlCmd = &cobra.Command{
 	Short: "Proxy commands to kubectl",
 	// Long: `TODO...`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		kubeconfig, err := getKubeconfig(cmd, args)
+		kubeconfig, err := getKubeconfig()
 		if err != nil {
 			return err
 		}

@@ -13,7 +13,7 @@ var vaultCmd = &cobra.Command{
 	Long: `This is useful when your vault is not exposed publicly.
 As it will port-forward to the service and call aws auth`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		kubeconfig, err := getKubeconfig(cmd, args)
+		kubeconfig, err := getKubeconfig()
 		if err != nil {
 			return err
 		}
