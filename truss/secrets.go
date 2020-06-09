@@ -36,7 +36,7 @@ func (l SecretConfigList) Secret(name, kubeconfig string) (*SecretConfig, error)
 			return &s, nil
 		}
 	}
-	return nil, fmt.Errorf("secret named %s in %s not found", name, kubeconfig)
+	return nil, fmt.Errorf("secret named '%s' in '%s' not found", name, kubeconfig)
 }
 
 // SecretNames returns a list of secret names provided in the list
