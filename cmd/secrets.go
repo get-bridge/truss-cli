@@ -35,7 +35,15 @@ func findSecret(sm *truss.SecretsManager, args []string, verb string) (*truss.Se
 		}
 		kubeconfig = args[1]
 	} else if kubeconfig == "" {
-		kubeconfig = prompter.Choose("For which kubeconfig?", sm.SecretKubeconfigs(name), "")
+		kubeconfigOptions := sm.SecretKubeconfigs(name)
+		switch len(kubeconfigOptions) {
+		case 0:
+			return nil, errors.New("no kubeconfig found for secret")
+		case 1:
+			kubeconfig = kubeconfigOptions[0]
+		default:
+			kubeconfig = prompter.Choose("For which kubeconfig?", kubeconfigOptions, "")
+		}
 	}
 
 	return sm.Secret(name, kubeconfig)
