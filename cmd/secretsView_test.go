@@ -18,7 +18,6 @@ func TestSecretsView(t *testing.T) {
 		})
 
 		// TODO how can we mock view?
-		// Convey("runs with no errors", func() {
-		// })
+		Convey("runs with no errors", nil)
 	})
 }

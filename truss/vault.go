@@ -24,7 +24,7 @@ func Vault(kubectl *KubectlCmd, auth VaultAuth) *VaultCmd {
 	}
 }
 
-// PortForward instantiates a port-forward for Vaut
+// PortForward instantiates a port-forward for Vault
 func (vault *VaultCmd) PortForward() (string, error) {
 	if vault.portForwarded != nil {
 		return *vault.portForwarded, nil

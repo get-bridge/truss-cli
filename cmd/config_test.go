@@ -8,7 +8,7 @@ import (
 )
 
 func TestConfig(t *testing.T) {
-	Convey("getKubeconfig", t, func() {
+	Convey("getKubeconfigName", t, func() {
 		Convey("gets kubeconfig name from env", func() {
 			viper.Set("environments", map[string]string{
 				"my-env": "my-kube",
@@ -16,7 +16,21 @@ func TestConfig(t *testing.T) {
 
 			rootCmd.SetArgs([]string{})
 			rootCmd.PersistentFlags().Set("env", "my-env")
-			kubeconfig, err := getKubeconfig(rootCmd, nil)
+			kubeconfig, err := getKubeconfigName()
+			So(err, ShouldBeNil)
+			So(kubeconfig, ShouldEqual, "my-kube")
+		})
+	})
+
+	Convey("getKubeconfig", t, func() {
+		Convey("gets kubeconfig full path from env", func() {
+			viper.Set("environments", map[string]string{
+				"my-env": "my-kube",
+			})
+
+			rootCmd.SetArgs([]string{})
+			rootCmd.PersistentFlags().Set("env", "my-env")
+			kubeconfig, err := getKubeconfig()
 			So(err, ShouldBeNil)
 			So(kubeconfig, ShouldEndWith, "my-kube")
 		})

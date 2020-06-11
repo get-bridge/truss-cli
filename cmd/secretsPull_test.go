@@ -18,7 +18,6 @@ func TestSecretsPull(t *testing.T) {
 		})
 
 		// TODO how can we mock pull?
-		// Convey("runs with no errors", func() {
-		// })
+		Convey("runs with no errors", nil)
 	})
 }

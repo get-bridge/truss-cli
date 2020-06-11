@@ -18,7 +18,6 @@ func TestSecretsPush(t *testing.T) {
 		})
 
 		// TODO how can we mock push?
-		// Convey("runs with no errors", func() {
-		// })
+		Convey("runs with no errors", nil)
 	})
 }

@@ -2,19 +2,22 @@ package truss
 
 import (
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestSetup(t *testing.T) {
-	t.Run("runs no errors", func(t *testing.T) {
-		dep := []string{}
-		if err := Setup(&dep); err != nil {
-			t.Fatal(err)
-		}
-	})
-	t.Run("runs error if dependency not found", func(t *testing.T) {
-		dep := []string{"a_mysterious_program"}
-		if err := Setup(&dep); err == nil {
-			t.Fatal("Expected Setup to fail with invalid dependency")
-		}
+	Convey("Setup", t, func() {
+		Convey("runs no errors", func() {
+			dep := []string{}
+			err := Setup(&dep)
+			So(err, ShouldBeNil)
+		})
+
+		Convey("runs error if dependency not found", func() {
+			err := Setup(&[]string{"a_mysterious_program"})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "missing dependencies: [a_mysterious_program]")
+		})
 	})
 }

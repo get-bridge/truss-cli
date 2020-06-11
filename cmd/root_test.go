@@ -29,9 +29,7 @@ func TestExecute(t *testing.T) {
 			cmd.Env = append(os.Environ(), "RUN_EXECUTE=1")
 			err := cmd.Run()
 			if e, ok := err.(*exec.ExitError); ok && !e.Success() {
-				if !strings.Contains(stderr.String(), "Error: unknown command \"foo\" for \"truss-cli\"") {
-					t.Fatalf("process ran with unexpected error: %v", stderr.String())
-				}
+				So(stderr.String(), ShouldContainSubstring, "Error: unknown command \"foo\" for \"truss-cli\"")
 				return
 			}
 			t.Fatalf("process ran with err %v, want exit status 1", err)
@@ -44,17 +42,14 @@ func TestRootCommand(t *testing.T) {
 		Convey("no args", func() {
 			rootCmd.SetArgs([]string{})
 			err := rootCmd.Execute()
-			if err != nil {
-				t.Fatalf("execute returned %s", err)
-			}
+			So(err, ShouldBeNil)
 		})
 
 		Convey("invalid args", func() {
 			rootCmd.SetArgs([]string{"foo"})
 			err := rootCmd.Execute()
-			if err != nil && err.Error() != "unknown command \"foo\" for \"truss-cli\"" {
-				t.Fatalf("execute should fail with invalid args. got %s", err)
-			}
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "unknown command \"foo\" for \"truss-cli\"")
 		})
 	})
 }
