@@ -1,30 +1,43 @@
 package cmd
 
 import (
+	"fmt"
 	"path"
 
 	homedir "github.com/mitchellh/go-homedir"
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-func getKubeconfig(cmd *cobra.Command, args []string) (kubeconfig string, err error) {
-	env, err := cmd.Flags().GetString("env")
-	if err != nil {
-		return
+func getKubeconfigName() (string, error) {
+	env := viper.GetString("env")
+	if env == "" {
+		return "", nil
 	}
 
-	if env != "" {
-		var kubeconfigDir string
-		kubeconfigDir, err = getKubeDir()
-		if err != nil {
-			return
+	environments := viper.GetStringMapString("environments")
+	kubeconfig := environments[env]
+	if kubeconfig == "" {
+		var keys []string
+		for k := range environments {
+			keys = append(keys, k)
 		}
-
-		environments := viper.GetStringMapString("environments")
-		kubeconfig = path.Join(kubeconfigDir, environments[env])
+		return "", fmt.Errorf("unknown env %v. Options: %v", env, keys)
 	}
-	return
+	return kubeconfig, nil
+}
+
+func getKubeconfig() (string, error) {
+	var kubeconfigDir string
+	kubeconfigDir, err := getKubeDir()
+	if err != nil {
+		return "", err
+	}
+
+	kubeconfig, err := getKubeconfigName()
+	if err != nil {
+		return "", err
+	}
+	return path.Join(kubeconfigDir, kubeconfig), nil
 }
 
 func getKubeDir() (string, error) {

@@ -62,19 +62,19 @@ secrets:
   - name: app-1
     kubeconfig: kubeconfig-truss-nonprod-cmh # relative to `kubeconfigfiles.directory` in `~/.truss.yaml`
     filePath: ./secrets/edge-cmh # relative to `pwd`
-    vaultPath: secrret/bridge/edge/cmh/app-1 # name of folder for multiple vault secrets
+    vaultPath: secret/bridge/edge/cmh/app-1 # name of folder for multiple vault secrets
   - name: app-1
     kubeconfig: kubeconfig-truss-prod-cmh
     filePath: ./secrets/prod-cmh
-    vaultPath: secrret/bridge/prod/cmh/app-1
+    vaultPath: secret/bridge/prod/cmh/app-1
   - name: app-2
     kubeconfig: kubeconfig-truss-nonprod-cmh
     filePath: ./secrets/edge-cmh
-    vaultPath: secrret/bridge/edge/cmh/app-2
+    vaultPath: secret/bridge/edge/cmh/app-2
   - name: app-2
     kubeconfig: kubeconfig-truss-prod-cmh
     filePath: ./secrets/prod-cmh
-    vaultPath: secrret/bridge/prod/cmh/app-2
+    vaultPath: secret/bridge/prod/cmh/app-2
 ```
 
 Then, run `truss secrets edit app-1 kubeconfig-truss-nonprod-cmh`. This will

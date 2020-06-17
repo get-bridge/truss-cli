@@ -36,7 +36,7 @@ func (l SecretConfigList) Secret(name, kubeconfig string) (*SecretConfig, error)
 			return &s, nil
 		}
 	}
-	return nil, fmt.Errorf("secret named %s in %s not found", name, kubeconfig)
+	return nil, fmt.Errorf("secret named '%s' in '%s' not found", name, kubeconfig)
 }
 
 // SecretNames returns a list of secret names provided in the list
@@ -68,12 +68,4 @@ func (l SecretConfigList) SecretKubeconfigs(name string) []string {
 		}
 	}
 	return kubeconfigs
-}
-
-// SecretConfig represents a desired Vault synchronization
-type SecretConfig struct {
-	Name       string `yaml:"name"`
-	Kubeconfig string `yaml:"kubeconfig"`
-	VaultPath  string `yaml:"vaultPath"`
-	FilePath   string `yaml:"filePath"`
 }
