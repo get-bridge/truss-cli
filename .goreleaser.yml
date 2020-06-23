@@ -9,6 +9,8 @@ before:
 builds:
 - env:
   - CGO_ENABLED=0
+  ldflags:
+    - -X github.com/instructure-bridge/truss-cli/cmd.Version={{.Version}}
 archives:
 - replacements:
     darwin: Darwin
