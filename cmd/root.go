@@ -13,8 +13,9 @@ var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "truss-cli",
-	Short: "A CLI for use with Bridge Truss",
+	Use:     "truss-cli",
+	Short:   "A CLI for use with Bridge Truss",
+	Version: "v0.0.6",
 	// Long: `TODO`,
 }
 
