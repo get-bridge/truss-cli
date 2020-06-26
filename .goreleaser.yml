@@ -28,3 +28,19 @@ changelog:
     exclude:
     - '^docs:'
     - '^test:'
+brews:
+  -
+    name: truss-cli
+    github:
+      owner: instructure-bridge
+      name: homebrew-truss-cli
+    folder: Formula
+    dependencies:
+      - name: kubectl
+      - name: vault
+      - name: sshuttle
+    test: |
+      system bin/"truss", "help"
+    install: |
+      system "cp", "truss-cli", "truss"
+      bin.install "truss"
