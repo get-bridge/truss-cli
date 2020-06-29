@@ -27,10 +27,12 @@ var EnvCmd = &cobra.Command{
 			Kubeconfigs: kubeconfigs,
 			KubeDir:     kubeDir,
 		}
-		output, err := truss.Env(input)
+		environmentVars, err := truss.Env(input)
 		if err != nil {
 			return err
 		}
+
+		output := environmentVars.BashFormat(env)
 
 		fmt.Fprintln(cmd.OutOrStdout(), output)
 		return nil

@@ -24,9 +24,7 @@ func TestEnv(t *testing.T) {
 			}
 			output, err := Env(input)
 			So(err, ShouldBeNil)
-			So(output, ShouldStartWith, "export KUBECONFIG=/home/test/.kube/kubeconfig-truss-nonprod-cmh")
-			So(output, ShouldContainSubstring, "# Run this command to configure your shell:")
-			So(output, ShouldContainSubstring, "# eval \"$(truss env -e edge-cmh)")
+			So(output.Kubeconfig, ShouldEqual, "/home/test/.kube/kubeconfig-truss-nonprod-cmh")
 		})
 
 		Convey("handles case when no kubeconfig found", func() {
@@ -36,8 +34,21 @@ func TestEnv(t *testing.T) {
 				KubeDir:     kubeDir,
 			}
 			output, err := Env(input)
-			So(output, ShouldBeEmpty)
+			So(output.Kubeconfig, ShouldBeEmpty)
 			So(err.Error(), ShouldEqual, "No kubeconfig found for env bogus")
 		})
+	})
+}
+
+func TestBashFormat(t *testing.T) {
+	Convey("formats Envs into bash command that can be eval'd", t, func() {
+		environmentVars := &EnvironmentVars{
+			Kubeconfig: "/home/test/.kube/kubeconfig-truss-nonprod-cmh",
+		}
+
+		output := environmentVars.BashFormat("edge-cmh")
+		So(output, ShouldStartWith, "export KUBECONFIG=/home/test/.kube/kubeconfig-truss-nonprod-cmh")
+		So(output, ShouldContainSubstring, "# Run this command to configure your shell:")
+		So(output, ShouldContainSubstring, "# eval \"$(truss env -e edge-cmh)")
 	})
 }
