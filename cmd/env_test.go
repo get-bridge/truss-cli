@@ -12,6 +12,7 @@ import (
 func TestEnv(t *testing.T) {
 	Convey("env", t, func() {
 		viper.Reset()
+		viper.Set("kubeconfigfiles.directory", "/tmp/")
 
 		Convey("returns env for a valid environment", func() {
 			viper.Set("environments", map[string]interface{}{
@@ -28,7 +29,7 @@ func TestEnv(t *testing.T) {
 			})
 			cmd.Execute()
 			out, _ := ioutil.ReadAll(buff)
-			So(string(out), ShouldEqual, "export KUBECONFIG=/Users/jblanchard/.kube/kubeconfig-truss-nonprod-cmh\n# Run this command to configure your shell:\n# eval \"$(truss env -e edge-cmh)\"\n")
+			So(string(out), ShouldEqual, "export KUBECONFIG=/tmp/kubeconfig-truss-nonprod-cmh\n# Run this command to configure your shell:\n# eval \"$(truss env -e edge-cmh)\"\n")
 		})
 
 		Convey("returns error for invalid environment", func() {
