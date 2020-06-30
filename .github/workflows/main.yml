@@ -36,4 +36,4 @@ jobs:
         version: latest
         args: release --rm-dist
       env:
-        GITHUB_TOKEN: ${{ secrets.JASONBLANCHARD_TMP_REPO_RW }}
+        GITHUB_TOKEN: ${{ secrets.INSTRUCTURE_BRIDGE_GITHUB_BOT_REPO_RW }}
