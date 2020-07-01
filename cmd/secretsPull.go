@@ -22,7 +22,7 @@ var secretsPullCmd = &cobra.Command{
 		}
 
 		var secret *truss.SecretConfig
-		secret, err = findSecret(sm, args, "push")
+		secret, err = findSecret(sm, args, "pull")
 		if err != nil {
 			return err
 		}
