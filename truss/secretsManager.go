@@ -182,10 +182,16 @@ func (m SecretsManager) Vault(secret SecretConfig) (*VaultCmd, error) {
 	return Vault(kubectl, m.VaultAuth), nil
 }
 
+// Exists determins whether the local secrets file exists
+func (m SecretsManager) Exists(secret SecretConfig) bool {
+	_, err := os.Stat(secret.FilePath)
+
+	return err == nil
+}
+
 // GetDecryptedFromDisk returns the encrypted yaml configuration from disk
 func (m SecretsManager) GetDecryptedFromDisk(vault *VaultCmd, secret SecretConfig) ([]byte, error) {
-	_, err := os.Stat(secret.FilePath)
-	if err != nil {
+	if !m.Exists(secret) {
 		return []byte("secrets: {}"), nil
 	}
 
