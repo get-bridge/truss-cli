@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/instructure-bridge/truss-cli/truss"
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 )
 
@@ -23,8 +24,17 @@ Uses S3 under the hood so it only works if you have AWS credentials set in your 
 		key, err := cmd.Flags().GetString("key")
 		region, err := cmd.Flags().GetString("region")
 		role, err := cmd.Flags().GetString("role")
+		dir, err := cmd.Flags().GetString("out")
 		if err != nil {
 			return err
+		}
+
+		if dir == "" {
+			home, err := homedir.Dir()
+			if err != nil {
+				return err
+			}
+			dir = home
 		}
 
 		input := &truss.GetGlobalConfigS3Input{
@@ -32,6 +42,7 @@ Uses S3 under the hood so it only works if you have AWS credentials set in your 
 			Key:    key,
 			Region: region,
 			Role:   role,
+			Dir:    dir,
 		}
 
 		err = truss.GetGlobalConfigS3(input)
@@ -49,4 +60,5 @@ func init() {
 	getGlobalConfigS3Cmd.Flags().StringP("key", "k", ".truss.yaml", "Name of the .truss.yaml file in the bucket")
 	getGlobalConfigS3Cmd.Flags().StringP("region", "r", "us-east-2", "Region of S3 bucket that contains your .truss.yaml file")
 	getGlobalConfigS3Cmd.Flags().StringP("role", "u", "", "Role with access to the S3 bucket with your .truss.yaml file")
+	getGlobalConfigS3Cmd.Flags().StringP("out", "o", "", "Output directory where the .truss.yaml file is written")
 }

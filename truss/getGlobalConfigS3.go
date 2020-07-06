@@ -9,7 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/mitchellh/go-homedir"
 )
 
 // GetGlobalConfigS3Input input for GetGlobalConfigS3
@@ -30,14 +29,7 @@ func GetGlobalConfigS3(input *GetGlobalConfigS3Input) error {
 		sess.Config.Credentials = stscreds.NewCredentials(sess, input.Role)
 	}
 
-	home, err := homedir.Dir()
-	if err != nil {
-		return err
-	}
-	dir := home
-	if input.Dir != "" {
-		dir = input.Dir
-	}
+	dir := input.Dir
 	file, err := os.Create(path.Join(dir, ".truss.yaml"))
 	if err != nil {
 		return err
