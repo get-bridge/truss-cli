@@ -21,7 +21,7 @@ type GetGlobalConfigS3Input struct {
 }
 
 // GetGlobalConfigS3 fetch global config from S3 and put it in home dir
-func GetGlobalConfigS3(input *GetGlobalConfigS3Input) error {
+func GetGlobalConfigS3(input *GetGlobalConfigS3Input) (string, error) {
 	sess, _ := session.NewSession(&aws.Config{
 		Region: aws.String(input.Region)},
 	)
@@ -32,7 +32,7 @@ func GetGlobalConfigS3(input *GetGlobalConfigS3Input) error {
 	dir := input.Dir
 	file, err := os.Create(path.Join(dir, ".truss.yaml"))
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer file.Close()
 
@@ -42,9 +42,6 @@ func GetGlobalConfigS3(input *GetGlobalConfigS3Input) error {
 			Bucket: aws.String(input.Bucket),
 			Key:    &input.Key,
 		})
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return file.Name(), err
 }

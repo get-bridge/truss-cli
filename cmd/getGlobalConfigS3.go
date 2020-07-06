@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/instructure-bridge/truss-cli/truss"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
@@ -37,10 +39,12 @@ Uses S3 under the hood so it only works if you have AWS credentials set in your 
 			Dir:    dir,
 		}
 
-		err = truss.GetGlobalConfigS3(input)
+		out, err := truss.GetGlobalConfigS3(input)
 		if err != nil {
 			return err
 		}
+
+		fmt.Fprintln(cmd.OutOrStdout(), fmt.Sprintf("Global config written to %s", out))
 
 		return nil
 	},
