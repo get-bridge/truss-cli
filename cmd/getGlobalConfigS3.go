@@ -29,14 +29,6 @@ Uses S3 under the hood so it only works if you have AWS credentials set in your 
 			return err
 		}
 
-		if dir == "" {
-			home, err := homedir.Dir()
-			if err != nil {
-				return err
-			}
-			dir = home
-		}
-
 		input := &truss.GetGlobalConfigS3Input{
 			Bucket: bucket,
 			Key:    key,
@@ -55,10 +47,16 @@ Uses S3 under the hood so it only works if you have AWS credentials set in your 
 }
 
 func init() {
+	home, err := homedir.Dir()
+
+	if err != nil {
+		panic(err)
+	}
+
 	getGlobalConfigCmd.AddCommand(getGlobalConfigS3Cmd)
 	getGlobalConfigS3Cmd.Flags().StringP("bucket", "b", "truss-cli-global-config", "S3 bucket that contains your .truss.yaml file")
 	getGlobalConfigS3Cmd.Flags().StringP("key", "k", ".truss.yaml", "Name of the .truss.yaml file in the bucket")
 	getGlobalConfigS3Cmd.Flags().StringP("region", "r", "us-east-2", "Region of S3 bucket that contains your .truss.yaml file")
 	getGlobalConfigS3Cmd.Flags().StringP("role", "u", "", "Role with access to the S3 bucket with your .truss.yaml file")
-	getGlobalConfigS3Cmd.Flags().StringP("out", "o", "", "Output directory where the .truss.yaml file is written")
+	getGlobalConfigS3Cmd.Flags().StringP("out", "o", home, "Output directory where the .truss.yaml file is written")
 }
