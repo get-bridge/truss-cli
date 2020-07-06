@@ -117,6 +117,34 @@ adding new commands install the cobra cli.
 cobra add my-new-command
 ```
 
+### Testing
+Add a `.envrc` file that looks like this:
+```
+export TEST_S3_BUCKET=truss-kubeconfig-us-east-2
+export TEST_AWS_ROLE=<role with access to bucket>
+export TEST_VAULT_ROLE=<vault role with rw access to secrets>
+export TEST_S3_BUCKET_REGION=us-east-2
+export TEST_GLOBAL_CONFIG_BUCKET=truss-cli-global-config
+export TEST_GLOBAL_CONFIG_KEY=.truss.yaml
+```
+
+Load the those into your shell:
+```sh
+source .envrc
+```
+
+Run all tests:
+
+```sh
+go test go test ./...
+```
+
+Run a specific test using the `-run` flag and a regex for the test name:
+
+```
+go test go test ./... -run ^TestWrap$
+```
+
 [1]: https://github.com/spf13/cobra#installing
 
 ### Publish release
