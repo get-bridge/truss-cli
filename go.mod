@@ -11,5 +11,8 @@ require (
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.6.3
-	gopkg.in/yaml.v2 v2.2.4
+	gopkg.in/yaml.v2 v2.2.8
+	k8s.io/api v0.15.12
+	k8s.io/apimachinery v0.15.12
+	k8s.io/client-go v0.15.12
 )
