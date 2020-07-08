@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -11,6 +10,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/pkg/errors"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,19 +39,17 @@ var shellNodeCmd = &cobra.Command{
 	Examples:
 
   truss -e nonprod-cmh shell node i-0b35c43cd48ab85ee
-	truss -e nonprod-cmh shell node ip-10-12-11-61.us-east-2.compute.internal`,
+  truss -e nonprod-cmh shell node ip-10-12-11-61.us-east-2.compute.internal`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		region, err := getAWSRegionFromKubeconfig()
-
 		if err != nil {
-			log.Fatal("Error retrieving AWS region from Kubeconfig:", err.Error())
+			return errors.Wrap(err, "Failed to retrieve AWS region from Kubeconfig")
 		}
 
 		awsRole := viper.GetString("aws.assumeRole")
-
 		if awsRole == "" {
-			log.Fatal("Error reading aws.assumeRole from config file:", err.Error())
+			return errors.New("Unable to find aws.assumeRole in config file")
 		}
 
 		sess := truss.NewAWSSession(region, awsRole)
@@ -60,9 +59,8 @@ var shellNodeCmd = &cobra.Command{
 		if strings.HasPrefix(args[0], "ip-") {
 			// Lookup instance-id from Kubernetes if given a node name
 			kubeNode, err := describeKubernetesNode(args[0])
-
 			if err != nil {
-				log.Fatal("Unable to describe Kubernetes node:", err.Error())
+				return errors.Wrap(err, "Unable to describe Kubernetes node")
 			}
 
 			providerIDParts := strings.Split(kubeNode.Spec.ProviderID, "/")
@@ -71,19 +69,30 @@ var shellNodeCmd = &cobra.Command{
 			instanceID = args[0]
 		}
 
-		instance := describeInstance(instanceID, sess)
+		instance, err := describeInstance(instanceID, sess)
+		if err != nil {
+			return errors.Wrap(err, "Unable to describe EC2 instance")
+		}
+
 		availabilityZone := *instance.Placement.AvailabilityZone
 		hostname := *instance.PrivateDnsName
 
-		sendPublicKey(availabilityZone, instanceID, getSSHPublicKey(), sess)
-
-		jump, err := getJump()
-
+		publicKey, err := getSSHPublicKey()
 		if err != nil {
-			log.Fatal("Error encountered when finding jumpbox:", err.Error())
+			return err
 		}
 
-		execSSHCommand(hostname, jump)
+		sendPublicKey(availabilityZone, instanceID, publicKey, sess)
+
+		jump, err := getJump()
+		if err != nil {
+			return errors.Wrap(err, "Unable to find jumpbox in config file")
+		}
+
+		err = execSSHCommand(hostname, jump)
+		if err != nil {
+			return err
+		}
 
 		return nil
 	},
@@ -107,15 +116,17 @@ func getAWSRegionFromKubeconfig() (string, error) {
 	return region, nil
 }
 
-func execSSHCommand(hostname string, jump string) {
+func execSSHCommand(hostname string, jump string) error {
 	sshBinary, err := exec.LookPath("ssh")
 	if err != nil {
-		log.Fatal("Could not find ssh binary")
+		return errors.Wrap(err, "Unable to locate ssh binary")
 	}
 
 	target := fmt.Sprintf("ec2-user@%s", hostname)
 	proxyJump := fmt.Sprintf("ProxyJump=%s", jump)
 	syscall.Exec(sshBinary, []string{"ssh", "-o", proxyJump, target}, os.Environ())
+
+	return nil
 }
 
 func getJump() (string, error) {
@@ -125,28 +136,30 @@ func getJump() (string, error) {
 	}
 
 	clusterEnv := strings.Replace(kubeconfigName, "kubeconfig-truss-", "", 1)
-	jumps := viper.GetStringMap("jumps")
 
-	return jumps[clusterEnv].(string), nil
-}
-
-func getSSHPublicKey() string {
-	homedir, err := os.UserHomeDir()
-
-	if err != nil {
-		log.Fatal("Error locating user homedir:", err.Error())
+	jump := viper.GetString("jumps." + clusterEnv)
+	if jump == "" {
+		return "", errors.New("Could not find jump for " + clusterEnv)
 	}
 
-	// TODO: Make this key configurable
+	return jump, nil
+}
+
+func getSSHPublicKey() (string, error) {
+	homedir, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
 	publicKeyPath := fmt.Sprintf("%s/.ssh/id_rsa.pub", homedir)
 
 	publicKeyFile, err := ioutil.ReadFile(publicKeyPath)
 
 	if err != nil {
-		log.Fatalf("Unable to read public key from %s:", publicKeyFile)
+		return "", errors.Wrap(err, "Unable to read public key from "+publicKeyPath)
 	}
 
-	return string(publicKeyFile)
+	return string(publicKeyFile), nil
 }
 
 func describeKubernetesNode(nodeName string) (*v1.Node, error) {
@@ -174,7 +187,7 @@ func describeKubernetesNode(nodeName string) (*v1.Node, error) {
 	return node, nil
 }
 
-func describeInstance(instanceID string, sess *session.Session) *ec2.Instance {
+func describeInstance(instanceID string, sess *session.Session) (*ec2.Instance, error) {
 	ec2svc := ec2.New(sess)
 
 	params := &ec2.DescribeInstancesInput{
@@ -184,14 +197,13 @@ func describeInstance(instanceID string, sess *session.Session) *ec2.Instance {
 	resp, err := ec2svc.DescribeInstances(params)
 
 	if err != nil {
-		fmt.Println("there was an error listing instances in", err.Error())
-		log.Fatal(err.Error())
+		return nil, err
 	}
 
-	return resp.Reservations[0].Instances[0]
+	return resp.Reservations[0].Instances[0], nil
 }
 
-func sendPublicKey(availabilityZone string, instanceID string, publicKey string, sess *session.Session) {
+func sendPublicKey(availabilityZone string, instanceID string, publicKey string, sess *session.Session) error {
 	svc := ec2instanceconnect.New(sess)
 
 	params := &ec2instanceconnect.SendSSHPublicKeyInput{
@@ -204,7 +216,8 @@ func sendPublicKey(availabilityZone string, instanceID string, publicKey string,
 	_, err := svc.SendSSHPublicKey(params)
 
 	if err != nil {
-		fmt.Println("There was an error sending SSH public key:", err.Error())
-		log.Fatal(err.Error())
+		return errors.Wrap(err, "There was an error sending SSH public key")
 	}
+
+	return nil
 }
