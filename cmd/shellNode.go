@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -27,20 +26,9 @@ import (
 )
 
 var shellNodeCmd = &cobra.Command{
-	Use:   "node [node-name]",
-	Short: "Launch a shell on a Truss node.",
-	Long: `Launch a shell on a Truss node via SSH.
-
-	Usage:
-
-	truss -e [env] shell node [instance-id]
-	truss -e [env] shell node [node-name]
-
-	Examples:
-
-  truss -e nonprod-cmh shell node i-0b35c43cd48ab85ee
-  truss -e nonprod-cmh shell node ip-10-12-11-61.us-east-2.compute.internal`,
-	Args: cobra.MaximumNArgs(1),
+	Use:   "node [node-name-or-instance-id]",
+	Short: "Launch a shell on a Truss node via SSH.",
+	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		region, err := getAWSRegionFromKubeconfig()
 		if err != nil {
@@ -82,7 +70,11 @@ var shellNodeCmd = &cobra.Command{
 			return err
 		}
 
-		username := "ec2-user"
+		username, err := cmd.Flags().GetString("user")
+
+		if err != nil {
+			return err
+		}
 
 		sendPublicKey(availabilityZone, instanceID, publicKey, username, sess)
 
@@ -91,13 +83,24 @@ var shellNodeCmd = &cobra.Command{
 			return errors.Wrap(err, "Unable to find jumpbox in config file")
 		}
 
-		err = execSSHCommand(hostname, username, jump)
+		var sshCmd = []string{}
+
+		if len(args) > 1 {
+			sshCmd = args[1:]
+		}
+
+		err = execSSHCommand(hostname, username, jump, sshCmd)
 		if err != nil {
 			return err
 		}
 
 		return nil
 	},
+}
+
+func init() {
+	shellNodeCmd.Flags().StringP("user", "u", "ec2-user", "The SSH user to target")
+	shellCmd.AddCommand(shellNodeCmd)
 }
 
 func getAWSRegionFromKubeconfig() (string, error) {
@@ -118,7 +121,7 @@ func getAWSRegionFromKubeconfig() (string, error) {
 	return region, nil
 }
 
-func execSSHCommand(hostname string, username string, jump string) error {
+func execSSHCommand(hostname string, username string, jump string, sshCmd []string) error {
 	sshBinary, err := exec.LookPath("ssh")
 	if err != nil {
 		return errors.Wrap(err, "Unable to locate ssh binary")
@@ -126,7 +129,10 @@ func execSSHCommand(hostname string, username string, jump string) error {
 
 	target := fmt.Sprintf("%s@%s", username, hostname)
 	proxyJump := fmt.Sprintf("ProxyJump=%s", jump)
-	syscall.Exec(sshBinary, []string{"ssh", "-o", proxyJump, target}, os.Environ())
+
+	args := []string{"ssh", "-o", proxyJump, target}
+	args = append(args, sshCmd...)
+	syscall.Exec(sshBinary, args, os.Environ())
 
 	return nil
 }
@@ -145,23 +151,6 @@ func getJump() (string, error) {
 	}
 
 	return jump, nil
-}
-
-func getSSHPublicKey() (string, error) {
-	homedir, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-
-	publicKeyPath := fmt.Sprintf("%s/.ssh/id_rsa.pub", homedir)
-
-	publicKeyFile, err := ioutil.ReadFile(publicKeyPath)
-
-	if err != nil {
-		return "", errors.Wrap(err, "Unable to read public key from "+publicKeyPath)
-	}
-
-	return string(publicKeyFile), nil
 }
 
 func describeKubernetesNode(nodeName string) (*v1.Node, error) {
