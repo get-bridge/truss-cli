@@ -82,14 +82,16 @@ var shellNodeCmd = &cobra.Command{
 			return err
 		}
 
-		sendPublicKey(availabilityZone, instanceID, publicKey, sess)
+		username := "ec2-user"
+
+		sendPublicKey(availabilityZone, instanceID, publicKey, username, sess)
 
 		jump, err := getJump()
 		if err != nil {
 			return errors.Wrap(err, "Unable to find jumpbox in config file")
 		}
 
-		err = execSSHCommand(hostname, jump)
+		err = execSSHCommand(hostname, username, jump)
 		if err != nil {
 			return err
 		}
@@ -116,13 +118,13 @@ func getAWSRegionFromKubeconfig() (string, error) {
 	return region, nil
 }
 
-func execSSHCommand(hostname string, jump string) error {
+func execSSHCommand(hostname string, username string, jump string) error {
 	sshBinary, err := exec.LookPath("ssh")
 	if err != nil {
 		return errors.Wrap(err, "Unable to locate ssh binary")
 	}
 
-	target := fmt.Sprintf("ec2-user@%s", hostname)
+	target := fmt.Sprintf("%s@%s", username, hostname)
 	proxyJump := fmt.Sprintf("ProxyJump=%s", jump)
 	syscall.Exec(sshBinary, []string{"ssh", "-o", proxyJump, target}, os.Environ())
 
@@ -203,13 +205,13 @@ func describeInstance(instanceID string, sess *session.Session) (*ec2.Instance, 
 	return resp.Reservations[0].Instances[0], nil
 }
 
-func sendPublicKey(availabilityZone string, instanceID string, publicKey string, sess *session.Session) error {
+func sendPublicKey(availabilityZone string, instanceID string, publicKey string, instanceUser string, sess *session.Session) error {
 	svc := ec2instanceconnect.New(sess)
 
 	params := &ec2instanceconnect.SendSSHPublicKeyInput{
 		AvailabilityZone: aws.String(availabilityZone),
 		InstanceId:       aws.String(instanceID),
-		InstanceOSUser:   aws.String("ec2-user"),
+		InstanceOSUser:   aws.String(instanceUser),
 		SSHPublicKey:     aws.String(publicKey),
 	}
 
