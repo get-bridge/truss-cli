@@ -89,12 +89,7 @@ var shellNodeCmd = &cobra.Command{
 			sshCmd = args[1:]
 		}
 
-		err = execSSHCommand(hostname, username, jump, sshCmd)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return execSSHCommand(hostname, username, jump, sshCmd)
 	},
 }
 
@@ -132,9 +127,8 @@ func execSSHCommand(hostname string, username string, jump string, sshCmd []stri
 
 	args := []string{"ssh", "-o", proxyJump, target}
 	args = append(args, sshCmd...)
-	syscall.Exec(sshBinary, args, os.Environ())
 
-	return nil
+	return syscall.Exec(sshBinary, args, os.Environ())
 }
 
 func getJump() (string, error) {
@@ -169,13 +163,7 @@ func describeKubernetesNode(nodeName string) (*v1.Node, error) {
 		return nil, err
 	}
 
-	node, err := clientset.CoreV1().Nodes().Get(nodeName, metav1.GetOptions{})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return node, nil
+	return clientset.CoreV1().Nodes().Get(nodeName, metav1.GetOptions{})
 }
 
 func describeInstance(instanceID string, sess *session.Session) (*ec2.Instance, error) {
