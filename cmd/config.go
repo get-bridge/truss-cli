@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"path"
 
 	homedir "github.com/mitchellh/go-homedir"
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
 
@@ -52,4 +54,31 @@ func getKubeDir() (string, error) {
 		directory = home + "/.kube/"
 	}
 	return directory, nil
+}
+
+func getSSHPublicKeyPath() (string, error) {
+	home, err := homedir.Dir()
+
+	if err != nil {
+		return "", errors.Wrap(err, "Unable to locate user's homedir")
+	}
+
+	viper.SetDefault("publicKeyPath", home+"/.ssh/id_rsa.pub")
+	return viper.GetString("publicKeyPath"), nil
+}
+
+func getSSHPublicKey() (string, error) {
+	publicKeyPath, err := getSSHPublicKeyPath()
+
+	if err != nil {
+		return "", err
+	}
+
+	publicKeyFile, err := ioutil.ReadFile(publicKeyPath)
+
+	if err != nil {
+		return "", errors.Wrap(err, "Unable to read public key from "+publicKeyPath)
+	}
+
+	return string(publicKeyFile), nil
 }
