@@ -31,19 +31,19 @@ var shellCmd = &cobra.Command{
 
 Examples:
   # Run a shell in the current namespace with the default image
-	truss shell -e nonprod-cmh
+  truss shell -e nonprod-cmh
 
-	# Run a shell in the 'vault' Namespace with the 'vault' ServiceAccount
-	truss shell -e nonprod-cmh -n vault -s vault
+  # Run a shell in the 'vault' Namespace with the 'vault' ServiceAccount
+  truss shell -e nonprod-cmh -n vault -s vault
 
-	# Run a shell in the 'cdp-edge' Namespace with Istio disabled
-	truss shell -e nonprod-cmh -n cdp-edge --istio=false
+  # Run a shell in the 'cdp-edge' Namespace with Istio disabled
+  truss shell -e nonprod-cmh -n cdp-edge --istio=false
 
-	# Run a Pod with a different image and an alternative command
-	truss shell -e nonprod-cmh -i nicolaka/netshoot
+  # Run a Pod with a different image and an alternative command
+  truss shell -e nonprod-cmh -i nicolaka/netshoot
 
-	# Run a container with a non-default command
-	truss shell -e nonprod-cmh -- ls -al /
+  # Run a container with a non-default command
+  truss shell -e nonprod-cmh -- ls -al /
 	`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Set KUBECONFIG and verify availability of kubectl
