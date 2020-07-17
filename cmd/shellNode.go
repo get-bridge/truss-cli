@@ -71,7 +71,6 @@ var shellNodeCmd = &cobra.Command{
 		}
 
 		username, err := cmd.Flags().GetString("user")
-
 		if err != nil {
 			return err
 		}
