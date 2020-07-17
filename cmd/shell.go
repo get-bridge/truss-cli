@@ -131,6 +131,8 @@ func buildShellKubectlArgs(podName string, image string, istioEnabled bool, serv
 		kubectlArgs = append(kubectlArgs, "--serviceaccount="+serviceaccount)
 	}
 
+	kubectlArgs = append(kubectlArgs, "--overrides="+string(overridesJSON))
+
 	// Normally , we'll run the image with its default command, but this allows
 	// it to be overriden.
 	if len(cmdArgs) > 0 {
@@ -138,7 +140,6 @@ func buildShellKubectlArgs(podName string, image string, istioEnabled bool, serv
 		kubectlArgs = append(kubectlArgs, cmdArgs...)
 	}
 
-	kubectlArgs = append(kubectlArgs, "--overrides="+string(overridesJSON))
 	return kubectlArgs, nil
 }
 
