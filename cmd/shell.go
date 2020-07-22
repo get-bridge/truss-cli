@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"os/user"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/pkg/errors"
@@ -68,7 +69,7 @@ Examples:
 			return nil
 		}
 
-		podName := "shell-" + user.Username
+		podName := "shell-" + strings.Replace(user.Username, ".", "-", -1)
 
 		// Fetch options from flags
 		image, err := cmd.Flags().GetString("image")
@@ -92,7 +93,7 @@ Examples:
 		}
 
 		// Build and exec the kubectl command
-		kubectlArgs, err := buildShellKubectlArgs(podName, image, istioEnabled, namespace, serviceaccount, args)
+		kubectlArgs, err := buildShellKubectlArgs(podName, image, istioEnabled, serviceaccount, namespace, args)
 		if err != nil {
 			return err
 		}
