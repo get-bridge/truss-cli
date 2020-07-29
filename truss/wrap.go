@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 )
 
 // WrapInput input for Wrap
@@ -28,7 +29,7 @@ func Wrap(input *WrapInput, bin string, arg ...string) error {
 
 	if envKubeconfig != nil {
 		kubeconfigName := fmt.Sprintf("%s", envKubeconfig)
-		kubeconfig = fmt.Sprintf("%s%s", input.KubeDir, kubeconfigName)
+		kubeconfig = filepath.Join(input.KubeDir, kubeconfigName)
 		cmd.Env = append(os.Environ(), "KUBECONFIG="+kubeconfig)
 	}
 
