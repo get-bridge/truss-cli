@@ -1,0 +1,21 @@
+---
+apiVersion: "rbac.istio.io/v1alpha1"
+kind: ServiceRole
+metadata:
+  name: {{ .Params.name }}-role
+spec:
+  rules:
+    - services:
+        - {{ .Params.name }}-{{ .Params.role }}
+      methods: ["*"]
+---
+apiVersion: "rbac.istio.io/v1alpha1"
+kind: ServiceRoleBinding
+metadata:
+  name: {{ .Params.name }}-role-binding
+spec:
+  subjects:
+    - user: "*"
+  roleRef:
+    kind: ServiceRole
+    name: {{ .Params.name }}-role

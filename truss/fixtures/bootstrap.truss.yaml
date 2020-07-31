@@ -1,0 +1,8 @@
+templateSource:
+  type: local
+  local:
+    directory: ./bootstrap-templates
+trussDir: .test
+template: test
+params:
+  foo: bar
