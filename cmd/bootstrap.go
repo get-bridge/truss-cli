@@ -22,8 +22,12 @@ var BootstrapCmd = &cobra.Command{
 		}
 		b, err := c.GetBootstrapper()
 		if err != nil {
+			if b != nil {
+				b.Cleanup()
+			}
 			return err
 		}
+		defer b.Cleanup()
 
 		m := b.GetTemplateManifest()
 		if m == nil {
@@ -72,6 +76,7 @@ var BootstrapListTemplatesCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		defer ts.Cleanup()
 
 		t, err := ts.ListTemplates()
 		if err != nil {

@@ -22,7 +22,9 @@ type BootstrapConfig struct {
 			Role   string `default:"arn:aws:iam::127178877223:role/xacct/ops-admin"`
 		}
 		Git struct {
-			URL string
+			CloneURL    string `default:"git@github.com:instructure-bridge/truss-cli.git" yaml:"clone_url"`
+			Directory   string `default:"bootstrap-templates"`
+			CheckoutRef string `yaml:"checkout_ref"`
 		}
 	} `yaml:"templateSource"`
 	TrussDir string `default:"truss" yaml:"trussDir"`
@@ -59,6 +61,13 @@ func (c BootstrapConfig) GetTemplateSource() (t TemplateSource, err error) {
 			c.TemplateSource.S3.Prefix,
 			c.TemplateSource.S3.Region,
 			c.TemplateSource.S3.Role,
+		)
+		return
+	case "git":
+		t, err = NewGitTemplateSource(
+			c.TemplateSource.Git.CloneURL,
+			c.TemplateSource.Git.Directory,
+			c.TemplateSource.Git.CheckoutRef,
 		)
 		return
 	}

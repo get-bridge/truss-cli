@@ -28,8 +28,9 @@ type BootstrapManifest struct {
 // TemplateSource sources templates
 type TemplateSource interface {
 	ListTemplates() ([]string, error)
-	LocalDirectory(template string) string
+	LocalDirectory(template string) (string, error)
 	GetTemplateManifest(t string) *BootstrapManifest
+	Cleanup()
 }
 
 // NewBootstrapper returns a new TemplateSource
@@ -51,8 +52,12 @@ func (b Bootstrapper) Bootstrap(params map[string]interface{}) error {
 		return fmt.Errorf("the target directory [%s] already exists", trussDir)
 	}
 
-	return filepath.Walk(b.LocalDirectory(b.Template), func(path string, info os.FileInfo, err error) error {
-		rel, _ := filepath.Rel(b.LocalDirectory(b.Template), path)
+	l, err := b.LocalDirectory(b.Template)
+	if err != nil {
+		return err
+	}
+	return filepath.Walk(l, func(path string, info os.FileInfo, err error) error {
+		rel, _ := filepath.Rel(l, path)
 		data := map[string]interface{}{
 			"Params":   params,
 			"TrussDir": b.TrussDir,

@@ -36,8 +36,8 @@ func (s LocalTemplateSource) ListTemplates() ([]string, error) {
 }
 
 // LocalDirectory returns a local directory for the template
-func (s LocalTemplateSource) LocalDirectory(template string) string {
-	return filepath.Join(s.Directory, template)
+func (s LocalTemplateSource) LocalDirectory(template string) (string, error) {
+	return filepath.Join(s.Directory, template), nil
 }
 
 // GetTemplateManifest gets the template's manifest
@@ -55,3 +55,6 @@ func (s LocalTemplateSource) GetTemplateManifest(t string) *BootstrapManifest {
 
 	return m
 }
+
+// Cleanup doesn't do anything
+func (s LocalTemplateSource) Cleanup() {}

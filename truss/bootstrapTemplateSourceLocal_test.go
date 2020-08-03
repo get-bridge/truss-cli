@@ -18,7 +18,9 @@ func TestTemplateSourceLocal(t *testing.T) {
 		})
 
 		Convey("it knows the local directory", func() {
-			So(ts.LocalDirectory("default"), ShouldEqual, "../bootstrap-templates/default")
+			l, err := ts.LocalDirectory("default")
+			So(err, ShouldBeNil)
+			So(l, ShouldEqual, "../bootstrap-templates/default")
 		})
 
 		Convey("it can get template manifests", func() {
