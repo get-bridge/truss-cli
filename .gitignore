@@ -23,3 +23,5 @@ dist/
 # Secrets
 secrets.yaml
 /secrets
+
+.terraform
