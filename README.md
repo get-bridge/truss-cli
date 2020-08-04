@@ -92,6 +92,9 @@ params:
   starlord: true
 ```
 
+> You can also provide param values by passing `--set name=value` to the
+> `truss bootstrap` command.
+
 With your configuration file in place at the root of your project, simply run
 `truss bootstrap` to create your local `./truss` directory. This deployment
 config will serve as a starting point for your project, and it is expected that

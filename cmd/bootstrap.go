@@ -2,9 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"strings"
 
-	"github.com/Songmu/prompter"
 	"github.com/instructure-bridge/truss-cli/truss"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -15,50 +13,42 @@ var BootstrapCmd = &cobra.Command{
 	Use:   "bootstrap",
 	Short: "Bootstrap a new Truss deployment.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		config, _ := cmd.Flags().GetString("config")
+		set, err := cmd.Flags().GetStringToString("set")
+		if err != nil {
+			return err
+		}
+		config, err := cmd.Flags().GetString("config")
+		if err != nil {
+			return err
+		}
+
 		c, err := truss.LoadBootstrapConfig(config)
 		if err != nil {
 			return err
 		}
 		b, err := c.GetBootstrapper()
+		defer b.Cleanup()
 		if err != nil {
-			if b != nil {
-				b.Cleanup()
-			}
 			return err
 		}
-		defer b.Cleanup()
 
 		m := b.GetTemplateManifest()
 		if m == nil {
-			return errors.New("Unable to get template manifest")
+			return errors.New("unable to load template manifest")
 		}
 
-		params := c.Params
-		for _, p := range m.Params {
-			if params[p.Name] != nil {
-				continue
-			}
+		p := &truss.BootstrapParams{}
+		p.LoadFromConfig(c)
+		p.LoadFromFlags(set)
 
-			switch strings.ToLower(p.Type) {
-			case "string":
-				var d string
-				if x, ok := p.Default.(string); ok {
-					d = x
-				}
-				params[p.Name] = prompter.Prompt(p.Prompt, d)
-			case "bool":
-				var d bool
-				if x, ok := p.Default.(bool); ok {
-					d = x
-				}
-				params[p.Name] = prompter.YN(p.Prompt, d)
+		if errs, err := p.Validate(m); err != nil {
+			for _, err := range errs {
+				fmt.Println(err)
 			}
+			return err
 		}
 
-		return b.Bootstrap(params)
-
-		// Consider printing the README.md
+		return b.Bootstrap(p)
 	},
 }
 
@@ -94,6 +84,7 @@ var BootstrapListTemplatesCmd = &cobra.Command{
 func init() {
 	BootstrapCmd.AddCommand(BootstrapListTemplatesCmd)
 	BootstrapCmd.Flags().StringP("template", "t", "default", "Template to use")
+	BootstrapCmd.Flags().StringToString("set", nil, "Set params on your template")
 	BootstrapCmd.PersistentFlags().StringP("config", "f", "./bootstrap.truss.yaml", "Config file for bootstrapping")
 
 	rootCmd.AddCommand(BootstrapCmd)

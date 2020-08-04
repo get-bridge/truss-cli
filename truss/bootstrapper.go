@@ -44,7 +44,7 @@ func (b Bootstrapper) GetTemplateManifest() *BootstrapManifest {
 }
 
 // Bootstrap does the thing!
-func (b Bootstrapper) Bootstrap(params map[string]interface{}) error {
+func (b Bootstrapper) Bootstrap(params *BootstrapParams) error {
 	wd, _ := os.Getwd()
 	trussDir := filepath.Join(wd, b.TrussDir)
 
