@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/instructure-bridge/truss-cli/truss"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -99,17 +100,21 @@ func init() {
 
 	u, _ := user.Current()
 	VpnCmd.PersistentFlags().String("server", "vpn.instructure.com", "Cisco Anyconnect Group to join")
+	viper.BindPFlag("vpn.server", VpnCmd.PersistentFlags().Lookup("server"))
 	VpnCmd.PersistentFlags().StringP("user", "u", u.Username, "User to use to connect to the VPN")
+	viper.BindPFlag("vpn.user", VpnCmd.PersistentFlags().Lookup("user"))
 	VpnCmd.PersistentFlags().StringP("authgroup", "g", "Employee_VPN", "Cisco Anyconnect Group to join")
+	viper.BindPFlag("vpn.authgroup", VpnCmd.PersistentFlags().Lookup("authgroup"))
 	VpnCmd.PersistentFlags().BoolP("sshuttle", "s", false, "Use sshuttle instead of Split Tunnel")
 	VpnCmd.PersistentFlags().String("ssh-host", "10.0.34.70", "SSH Host to use for sshuttle implementation")
 }
 
 func getOC(cmd *cobra.Command) *truss.OpenConnect {
-	user, _ := cmd.Flags().GetString("user")
-	server, _ := cmd.Flags().GetString("server")
-	authGroup, _ := cmd.Flags().GetString("authgroup")
-	oc := truss.NewOpenConnect(user, server, authGroup)
+	oc := truss.NewOpenConnect(
+		viper.GetString("vpn.user"),
+		viper.GetString("vpn.server"),
+		viper.GetString("vpn.authgroup"),
+	)
 
 	if s, err := cmd.Flags().GetBool("sshuttle"); err == nil && s {
 		h, _ := cmd.Flags().GetString("ssh-host")
