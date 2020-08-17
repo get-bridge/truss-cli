@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"os/user"
 )
 
 // OpenConnect represents an OpenConnect Connection
@@ -31,12 +30,11 @@ const (
 )
 
 // NewOpenConnect returns a default OpenConnect instance
-func NewOpenConnect() *OpenConnect {
-	u, _ := user.Current()
+func NewOpenConnect(user, server, authGroup string) *OpenConnect {
 	return &OpenConnect{
-		User:      u.Username,
-		Authgroup: "Employee_VPN",
-		Server:    "vpn.instructure.com",
+		User:      user,
+		Server:    server,
+		Authgroup: authGroup,
 	}
 }
 

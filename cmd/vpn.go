@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -33,6 +34,8 @@ sshuttle:
 After the connection is established, sshuttle will run as a daemon to forward traffic.
 
 The "truss vpn stop" command will kill this sshuttle process by pid.
+
+By default, all Kubernetes clusters defined in your ~/.truss.yaml will be routed through the VPN. You can specify vpn.forwardHosts and vpn.forwardIPs to add additional static routes as well.
 `,
 }
 
@@ -68,7 +71,7 @@ var VpnOpenConnectVpncCmd = &cobra.Command{
 			inc = 0
 		}
 
-		c := exec.Command("/usr/local/etc/vpnc-script")
+		c := exec.Command(vpncScript)
 		c.Stdout = os.Stdout
 		c.Stdin = os.Stdin
 		c.Stderr = os.Stderr
@@ -94,12 +97,19 @@ func init() {
 	VpnCmd.AddCommand(VpnOpenConnectVpncCmd)
 	rootCmd.AddCommand(VpnCmd)
 
+	u, _ := user.Current()
+	VpnCmd.PersistentFlags().String("server", "vpn.instructure.com", "Cisco Anyconnect Group to join")
+	VpnCmd.PersistentFlags().StringP("user", "u", u.Username, "User to use to connect to the VPN")
+	VpnCmd.PersistentFlags().StringP("authgroup", "g", "Employee_VPN", "Cisco Anyconnect Group to join")
 	VpnCmd.PersistentFlags().BoolP("sshuttle", "s", false, "Use sshuttle instead of Split Tunnel")
 	VpnCmd.PersistentFlags().String("ssh-host", "10.0.34.70", "SSH Host to use for sshuttle implementation")
 }
 
 func getOC(cmd *cobra.Command) *truss.OpenConnect {
-	oc := truss.NewOpenConnect()
+	user, _ := cmd.Flags().GetString("user")
+	server, _ := cmd.Flags().GetString("server")
+	authGroup, _ := cmd.Flags().GetString("authgroup")
+	oc := truss.NewOpenConnect(user, server, authGroup)
 
 	if s, err := cmd.Flags().GetBool("sshuttle"); err == nil && s {
 		h, _ := cmd.Flags().GetString("ssh-host")
@@ -126,7 +136,7 @@ func getRoutes(cmd *cobra.Command) []string {
 		return nil
 	}
 
-	routes := []string{}
+	hosts := viper.GetStringSlice("vpn.forwardHosts")
 	for name := range viper.GetStringMap("environments") {
 		f := filepath.Join(kd, viper.GetString("environments."+name))
 		c, err := clientcmd.LoadFromFile(f)
@@ -135,14 +145,18 @@ func getRoutes(cmd *cobra.Command) []string {
 		}
 
 		for _, cluster := range c.Clusters {
-			h := strings.Replace(cluster.Server, "https://", "", 1)
-			addrs, err := net.LookupHost(h)
-			if err != nil {
-				return nil
-			}
-			for _, addr := range addrs {
-				routes = appendDedupe(routes, addr)
-			}
+			hosts = appendDedupe(hosts, strings.Replace(cluster.Server, "https://", "", 1))
+		}
+	}
+
+	routes := viper.GetStringSlice("vpn.forwardIPs")
+	for _, h := range hosts {
+		addrs, err := net.LookupHost(h)
+		if err != nil {
+			return nil
+		}
+		for _, addr := range addrs {
+			routes = appendDedupe(routes, addr)
 		}
 	}
 
