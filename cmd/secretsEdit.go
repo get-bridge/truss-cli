@@ -35,8 +35,8 @@ var secretsEditCmd = &cobra.Command{
 			if len(args) > 0 {
 				return secretsPushCmd.RunE(cmd, args)
 			} else {
-				new_args := []string{secret.Name}
-				return secretsPushCmd.RunE(cmd, new_args)
+				newArgs := []string{secret.Name}
+				return secretsPushCmd.RunE(cmd, newArgs)
 			}
 		}
 		return nil
