@@ -31,8 +31,13 @@ var secretsEditCmd = &cobra.Command{
 			return nil
 		}
 
-		if editPush || prompter.YesNo("Push to environment "+args[0]+"?", false) {
-			return secretsPushCmd.RunE(cmd, args)
+		if editPush || prompter.YesNo("Push to environment "+ secret.Name +"?", false) {
+			if len(args) > 0 {
+				return secretsPushCmd.RunE(cmd, args)
+			} else {
+				new_args := []string{secret.Name}
+				return secretsPushCmd.RunE(cmd, new_args)
+			}
 		}
 		return nil
 	},
