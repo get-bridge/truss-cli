@@ -24,7 +24,7 @@ func TestGetGlobalConfigS3(t *testing.T) {
 		}
 		key, ok := os.LookupEnv("TEST_GLOBAL_CONFIG_KEY")
 		if !ok {
-			region = ".truss.yaml"
+			key = ".truss.yaml"
 		}
 		tmp := os.TempDir()
 		input := &GetGlobalConfigS3Input{
