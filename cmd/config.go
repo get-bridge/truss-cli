@@ -11,7 +11,7 @@ import (
 )
 
 func getKubeconfigName() (string, error) {
-	env := viper.GetString("env")
+	env := viper.GetString("TRUSS_ENV")
 	if env == "" {
 		return "", nil
 	}

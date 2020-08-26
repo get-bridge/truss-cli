@@ -35,14 +35,14 @@ func TestSecrets(t *testing.T) {
 			})
 
 			Convey("errors if unknown env specified", func() {
-				viper.Set("env", "test-env")
+				viper.Set("TRUSS_ENV", "test-env")
 				_, err := findSecret(sm, args, "pull")
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, "unknown env test-env. Options: []")
 			})
 
 			Convey("errors if env also specified", func() {
-				viper.Set("env", "test-env")
+				viper.Set("TRUSS_ENV", "test-env")
 				viper.Set("environments", map[string]string{"test-env": "kube-config-name"})
 				_, err := findSecret(sm, args, "pull")
 				So(err, ShouldNotBeNil)
