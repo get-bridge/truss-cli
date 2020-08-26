@@ -37,7 +37,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default is $HOME/.truss.yaml)")
 
 	rootCmd.PersistentFlags().StringP("env", "e", "", "The environment to target")
-	viper.BindPFlag("env", rootCmd.PersistentFlags().Lookup("env"))
+	viper.BindPFlag("TRUSS_ENV", rootCmd.PersistentFlags().Lookup("env"))
 }
 
 func initConfig() {
