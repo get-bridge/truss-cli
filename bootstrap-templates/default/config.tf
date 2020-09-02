@@ -17,3 +17,9 @@ provider "aws" {
     role_arn = "arn:aws:iam::127178877223:role/xacct/ops-admin"
   }
 }
+
+provider "spinnaker" {
+  address   = "https://api-prod.spinnaker.bridgeops.sh"
+  cert_path = "~/.spin/shared-prod/spinnaker-client.crt"
+  key_path  = "~/.spin/shared-prod/spinnaker-client.key"
+}

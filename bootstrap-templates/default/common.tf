@@ -14,3 +14,15 @@ module "truss-tenant" {
     }]
   }]
 }
+
+resource "spinnaker_application" "application" {
+  name          = "{{ .Params.name }}"
+  email         = "bridge-eng@instructure.com"
+  instance_port = {{ .Params.httpPort }}
+
+  permissions {
+    read    = ["bridge-engineering-all"]
+    write   = ["bridge-engineering-all"]
+    execute = ["bridge-engineering-all"]
+  }
+}

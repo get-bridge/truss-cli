@@ -21,4 +21,4 @@ patchesStrategicMerge:
       name: {{ .Params.name }}-{{ .Params.role }}
     spec:
       hosts:
-        - {{ .Params.name }}-prod.nonprod-dub.truss.bridgeops.sh
+        - {{ .Params.name }}.prod-dub.truss.bridgeops.sh
