@@ -1,0 +1,20 @@
+---
+commonLabels:
+  app: {{ .Params.name }}
+  role: {{ .Params.role }}
+resources:
+  - service.yaml
+  - podDisruptionBudget.yaml
+  - rbac.yaml
+  - virtualService.yaml
+
+configMapGenerator:
+  - name: {{ .Params.name }}-{{ .Params.role }}
+    literals:
+      - RAILS_ENV=production
+      - INST_DOG_TAGS='{}'
+      - INST_STATSD_HOST="datadog"
+      - INST_STATSD_APPEND_HOSTNAME="false"
+
+generatorOptions:
+  disableNameSuffixHash: true

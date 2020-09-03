@@ -1,0 +1,24 @@
+namespace: {{ .Params.name }}-edge
+bases:
+  - ../../../modules/{{ .Params.name }}-{{ .Params.role }}/kustomize
+
+commonLabels:
+  env: edge
+  region: cmh
+
+configMapGenerator:
+  - name: {{ .Params.name }}-{{ .Params.role }}
+    behavior: merge
+    literals:
+      - AWS_REGION=us-east-2
+      - INST_DOG_TAGS='{"project":"{{ .Params.name }}","environment":"edge","region":"us-east-2"}'
+
+patchesStrategicMerge:
+  - |-
+    apiVersion: networking.istio.io/v1alpha3
+    kind: VirtualService
+    metadata:
+      name: {{ .Params.name }}-{{ .Params.role }}
+    spec:
+      hosts:
+        - {{ .Params.name }}-edge.nonprod-cmh.truss.bridgeops.sh

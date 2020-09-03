@@ -49,6 +49,62 @@ go get github.com/instructure-bridge/truss-cli truss
 
 ## Usage
 
+### Bootstrapping a Truss Deployment
+
+With the `truss bootstrap` command, you can quickly and easily bootstrap your
+Truss deployment configuration using one of our pre-made templates. To get
+started, you'll need to configure the bootstrapper by creating a
+`bootstrap.truss.yaml` file. It should look something like this:
+
+```yaml
+# The following templateSource configuration represents the default values,
+# which means you'll need to have insopshub credentials loaded in order to
+# assume the ops-admin role. You only need to include any of this in your local
+# configuration file if you intend to override these defaults.
+templateSource:
+  type: s3
+  local:
+    directory: ./bootstrap-templates
+  s3:
+    bucket: truss-cli-global-config
+    region: us-east-2
+    prefix: bootstrap-templates
+    role: arn:aws:iam::127178877223:role/xacct/ops-admin
+  git:
+    clone_url: git@github.com:instructure-bridge/truss-cli.git
+    directory: bootstrap-templates
+    checkout_ref: refs/heads/master
+
+# template represents which template to render. The default is "default"
+template: default
+# trussDir is the directory where deployment configuration will be rendered. The
+# default is "truss"
+trussDir: truss
+# params represent your values for the given template's parameters. They are
+# defined in the template in the `.truss-manifest.yaml` file. The default values
+# for the default template are included here.
+params:
+  name: ""
+  role: ""
+  httpPort: ""
+  image: ""
+  trigger_jenkins_job: ""
+  starlord: true
+```
+
+> You can also provide param values by passing `--set name=value` to the
+> `truss bootstrap` command.
+
+With your configuration file in place at the root of your project, simply run
+`truss bootstrap` to create your local `./truss` directory. This deployment
+config will serve as a starting point for your project, and it is expected that
+you will make changes per your application's needs. Thus, your
+`bootstrap.truss.yaml` is no longer necessary.
+
+In the future, we might strive to make this template customizable enough such
+that you could keep your `bootstrap.truss.yaml` and re-generate as we publish
+updates to the template. For now, it's one-and-done!
+
 ### Secrets
 
 The `truss secrets` command makes it easier to manage secrets in git, and
