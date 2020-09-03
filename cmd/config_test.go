@@ -23,6 +23,16 @@ func TestConfig(t *testing.T) {
 	})
 
 	Convey("getKubeconfig", t, func() {
+		Convey("defaults to empty string", func() {
+			viper.Set("environments", map[string]string{})
+
+			rootCmd.SetArgs([]string{})
+			rootCmd.PersistentFlags().Set("env", "")
+			kubeconfig, err := getKubeconfig()
+			So(err, ShouldBeNil)
+			So(kubeconfig, ShouldBeEmpty)
+		})
+
 		Convey("gets kubeconfig full path from env", func() {
 			viper.Set("environments", map[string]string{
 				"my-env": "my-kube",
