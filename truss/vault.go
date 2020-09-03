@@ -1,6 +1,7 @@
 package truss
 
 import (
+	"encoding/base64"
 	"errors"
 	"os"
 	"os/exec"
@@ -45,6 +46,7 @@ func (vault *VaultCmd) ClosePortForward() error {
 	if vault.portForwarded == nil {
 		return nil
 	}
+	vault.portForwarded = nil
 	return vault.kubectl.ClosePortForward()
 }
 
@@ -113,4 +115,42 @@ func execVault(port string, arg ...string) ([]byte, error) {
 	}
 
 	return output, nil
+}
+
+// Encrypt shit
+func (vault *VaultCmd) Encrypt(transitKeyName string, raw []byte) ([]byte, error) {
+	if transitKeyName == "" {
+		return nil, errors.New(("Must provide transitkey to encrpt"))
+	}
+	out, err := vault.Run([]string{
+		"write",
+		"-field=ciphertext",
+		"transit/encrypt/" + transitKeyName,
+		"plaintext=" + base64.StdEncoding.EncodeToString(raw),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}
+
+// Decrypt shit
+func (vault *VaultCmd) Decrypt(transitKeyName string, encrypted []byte) ([]byte, error) {
+	if transitKeyName == "" {
+		return nil, errors.New(("Must provide transitkey to decrypt"))
+	}
+	out, err := vault.Run([]string{
+		"write",
+		"-field=plaintext",
+		"transit/decrypt/" + transitKeyName,
+		"ciphertext=" + string(encrypted),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return base64.StdEncoding.DecodeString(string(out))
 }

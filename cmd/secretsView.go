@@ -1,9 +1,6 @@
 package cmd
 
 import (
-	"errors"
-	"fmt"
-
 	"github.com/instructure-bridge/truss-cli/truss"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -24,21 +21,6 @@ var secretsViewCmd = &cobra.Command{
 			return err
 		}
 
-		if !sm.Exists(*secret) {
-			return errors.New("no such local secrets file exists. try running truss secrets pull")
-		}
-
-		vault, err := sm.Vault(*secret)
-		if err != nil {
-			return err
-		}
-
-		out, err := sm.GetDecryptedFromDisk(vault, *secret)
-		if err != nil {
-			return err
-		}
-
-		fmt.Print(string(out))
-		return nil
+		return sm.View(secret)
 	},
 }

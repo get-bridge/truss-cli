@@ -31,31 +31,10 @@ secrets:
 		// TODO remove when used
 		_ = sm
 
-		// TODO
 		Convey("Edit", nil)
-		// TODO
 		Convey("PushAll", nil)
-		// TODO
 		Convey("Push", nil)
-		// TODO
 		Convey("PullAll", nil)
-		// TODO
 		Convey("Pull", nil)
-		// TODO
-		Convey("GetDecryptedFromDisk", nil)
-		// TODO
-		Convey("GetMapFromDisk", nil)
-		// TODO
-		Convey("GetMapFromVault", nil)
-		// TODO
-		Convey("WriteMapToDisk", nil)
-		// TODO
-		Convey("EncryptAndSaveToDisk", nil)
-		// TODO
-		Convey("Decrypt", nil)
-		// TODO
-		Convey("Encrypt", nil)
-		// TODO
-		Convey("Write", nil)
 	})
 }

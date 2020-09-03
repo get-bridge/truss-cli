@@ -8,33 +8,47 @@ import (
 
 func TestVault(t *testing.T) {
 	Convey("Vault", t, func() {
-		cmd := Vault(Kubectl(""), nil)
+		vault := Vault(Kubectl(""), nil)
 
 		Convey("PortForward", func() {
 			Convey("runs no errors", func() {
-				port, err := cmd.PortForward()
+				port, err := vault.PortForward()
 				So(err, ShouldBeNil)
 				So(port, ShouldNotBeEmpty)
 
-				port2, err := cmd.PortForward()
+				port2, err := vault.PortForward()
 				So(err, ShouldBeNil)
 				So(port, ShouldEqual, port2)
 
-				err = cmd.ClosePortForward()
+				err = vault.ClosePortForward()
 				So(err, ShouldBeNil)
 			})
 		})
 
 		Convey("Run", func() {
 			Convey("runs no errors", func() {
-				_, err := cmd.Run([]string{"status"})
+				_, err := vault.Run([]string{"status"})
 				So(err, ShouldBeNil)
 			})
 
 			Convey("forwards errors", func() {
-				_, err := cmd.Run([]string{})
+				_, err := vault.Run([]string{})
 				So(err, ShouldNotBeNil)
 			})
 		})
+
+		Convey("ClosePortForward", func() {
+			Convey("set portForwarded to nil", func() {
+				portForwarded := "true"
+				vault.portForwarded = &portForwarded
+				err := vault.ClosePortForward()
+				So(err, ShouldNotBeNil)
+				So(vault.portForwarded, ShouldNotBeNil)
+			})
+		})
+
+		// TODO
+		Convey("Decrypt", nil)
+		Convey("Encrypt", nil)
 	})
 }

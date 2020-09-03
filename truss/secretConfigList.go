@@ -26,6 +26,10 @@ func SecretConfigListFromFile(path string) (*SecretConfigList, error) {
 		return nil, err
 	}
 
+	for _, s := range list.Secrets {
+		s.transitKeyName = list.TransitKeyName
+	}
+
 	return list, nil
 }
 
