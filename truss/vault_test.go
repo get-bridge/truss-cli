@@ -1,6 +1,7 @@
 package truss
 
 import (
+	"os"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -8,7 +9,14 @@ import (
 
 func TestVault(t *testing.T) {
 	Convey("Vault", t, func() {
-		vault := Vault(Kubectl(""), nil)
+
+		var auth VaultAuth
+		awsrole, ok := os.LookupEnv("TEST_AWS_ROLE")
+		if ok {
+			vaultrole := os.Getenv("TEST_VAULT_ROLE")
+			auth = VaultAuthAWS(vaultrole, awsrole)
+		}
+		vault := Vault(Kubectl(""), auth)
 
 		Convey("PortForward", func() {
 			Convey("runs no errors", func() {
@@ -22,6 +30,7 @@ func TestVault(t *testing.T) {
 
 				err = vault.ClosePortForward()
 				So(err, ShouldBeNil)
+				So(vault.portForwarded, ShouldBeNil)
 			})
 		})
 
@@ -34,21 +43,39 @@ func TestVault(t *testing.T) {
 			Convey("forwards errors", func() {
 				_, err := vault.Run([]string{})
 				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldStartWith, "Usage: vault")
 			})
 		})
 
-		Convey("ClosePortForward", func() {
-			Convey("set portForwarded to nil", func() {
-				portForwarded := "true"
-				vault.portForwarded = &portForwarded
-				err := vault.ClosePortForward()
+		Convey("Decrypt", func() {
+			Convey("errors if no transitKeyName provided", func() {
+				transitKeyName := ""
+				encrypted := []byte{}
+				_, err := vault.Decrypt(transitKeyName, encrypted)
 				So(err, ShouldNotBeNil)
-				So(vault.portForwarded, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, "Must provide transitkey to decrypt")
 			})
 		})
 
-		// TODO
-		Convey("Decrypt", nil)
-		Convey("Encrypt", nil)
+		Convey("Encrypt", func() {
+			Convey("errors if no transitKeyName provided", func() {
+				transitKeyName := ""
+				raw := []byte{}
+				_, err := vault.Encrypt(transitKeyName, raw)
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, "Must provide transitkey to encrypt")
+			})
+		})
+
+		Convey("Encrypt then Decrypt", func() {
+			transitKeyName := "test-transit-key"
+			input := "my-great-stuff"
+			encrypted, err := vault.Encrypt(transitKeyName, []byte(input))
+			So(err, ShouldBeNil)
+			So(encrypted, ShouldNotBeNil)
+			decrypted, err := vault.Decrypt(transitKeyName, encrypted)
+			So(err, ShouldBeNil)
+			So(string(decrypted), ShouldEqual, input)
+		})
 	})
 }

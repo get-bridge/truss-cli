@@ -120,7 +120,7 @@ func execVault(port string, arg ...string) ([]byte, error) {
 // Encrypt shit
 func (vault *VaultCmd) Encrypt(transitKeyName string, raw []byte) ([]byte, error) {
 	if transitKeyName == "" {
-		return nil, errors.New(("Must provide transitkey to encrpt"))
+		return nil, errors.New(("Must provide transitkey to encrypt"))
 	}
 	out, err := vault.Run([]string{
 		"write",
