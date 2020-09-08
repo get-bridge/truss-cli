@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/instructure-bridge/truss-cli/truss"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -21,6 +23,11 @@ var secretsViewCmd = &cobra.Command{
 			return err
 		}
 
-		return sm.View(secret)
+		secretString, err := sm.View(secret)
+		if err != nil {
+			return err
+		}
+		fmt.Println(secretString)
+		return nil
 	},
 }

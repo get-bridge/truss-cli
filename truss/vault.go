@@ -3,6 +3,7 @@ package truss
 import (
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
@@ -111,7 +112,7 @@ func execVault(port string, arg ...string) ([]byte, error) {
 	cmd.Env = append(cmd.Env, "VAULT_ADDR=https://localhost:"+port, "VAULT_SKIP_VERIFY=true")
 	output, err := cmd.Output()
 	if err != nil {
-		return nil, errors.New(string(err.(*exec.ExitError).Stderr))
+		return nil, fmt.Errorf("Vault command failed: %v", string(err.(*exec.ExitError).Stderr))
 	}
 
 	return output, nil

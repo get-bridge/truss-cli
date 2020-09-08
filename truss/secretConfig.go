@@ -27,7 +27,7 @@ func (s SecretConfig) exists() bool {
 	return err == nil
 }
 
-// getDecryptedFromDisk returns the encrypted yaml configuration from disk
+// getDecryptedFromDisk returns the decrypted yaml from disk
 func (s SecretConfig) getDecryptedFromDisk(vault *VaultCmd) ([]byte, error) {
 	if !s.exists() {
 		return []byte("secrets: {}"), nil
@@ -88,7 +88,7 @@ func (s SecretConfig) writeMapToDisk(vault *VaultCmd, secrets map[string]map[str
 }
 
 // Write writes a secret to Vault
-func (m SecretsManager) write(vault *VaultCmd, secret SecretConfig, dst string, data map[string]string) error {
+func (m SecretsManager) write(vault *VaultCmd, secret *SecretConfig, dst string, data map[string]string) error {
 	args := []string{"kv", "put", path.Join(secret.VaultPath, dst)}
 	for k, v := range data {
 		args = append(args, fmt.Sprintf("%s=%s", k, v))

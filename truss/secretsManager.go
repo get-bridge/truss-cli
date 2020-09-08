@@ -3,7 +3,6 @@ package truss
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -41,7 +40,7 @@ func NewSecretsManager(editor string, vaultAuth VaultAuth) (*SecretsManager, err
 
 // Edit edits an environments's secrets
 // Returns true if $EDITOR wrote to the temp file
-func (m SecretsManager) Edit(secret SecretConfig) (bool, error) {
+func (m SecretsManager) Edit(secret *SecretConfig) (bool, error) {
 	// start port-forward
 	vault, err := m.vault(secret)
 	if err != nil {
@@ -107,7 +106,7 @@ func (m SecretsManager) PushAll() error {
 }
 
 // Push pushes secrets to Vaut
-func (m SecretsManager) Push(secret SecretConfig) error {
+func (m SecretsManager) Push(secret *SecretConfig) error {
 	vault, err := m.vault(secret)
 	if err != nil {
 		return err
@@ -139,7 +138,7 @@ func (m SecretsManager) PullAll() error {
 }
 
 // Pull updates the file on disk with the vaules from Vault (destructive)
-func (m SecretsManager) Pull(secret SecretConfig) error {
+func (m SecretsManager) Pull(secret *SecretConfig) error {
 	vault, err := m.vault(secret)
 	if err != nil {
 		return err
@@ -158,7 +157,7 @@ func (m SecretsManager) Pull(secret SecretConfig) error {
 }
 
 // kubectl creates a Kubectl client
-func (m SecretsManager) kubectl(secret SecretConfig) (*KubectlCmd, error) {
+func (m SecretsManager) kubectl(secret *SecretConfig) (*KubectlCmd, error) {
 	config := viper.GetStringMap("kubeconfigfiles")
 	directory, ok := config["directory"].(string)
 	if !ok {
@@ -173,7 +172,7 @@ func (m SecretsManager) kubectl(secret SecretConfig) (*KubectlCmd, error) {
 }
 
 // vault creates a proxied Vault client
-func (m SecretsManager) vault(secret SecretConfig) (*VaultCmd, error) {
+func (m SecretsManager) vault(secret *SecretConfig) (*VaultCmd, error) {
 	kubectl, err := m.kubectl(secret)
 	if err != nil {
 		return nil, err
@@ -183,7 +182,7 @@ func (m SecretsManager) vault(secret SecretConfig) (*VaultCmd, error) {
 }
 
 // getMapFromVault returns a collection of secrets as a map
-func (m SecretsManager) getMapFromVault(vault *VaultCmd, secret SecretConfig) (map[string]map[string]string, error) {
+func (m SecretsManager) getMapFromVault(vault *VaultCmd, secret *SecretConfig) (map[string]map[string]string, error) {
 	out := map[string]map[string]string{}
 
 	list, err := vault.Run([]string{
@@ -228,21 +227,20 @@ func (m SecretsManager) getMapFromVault(vault *VaultCmd, secret SecretConfig) (m
 }
 
 // View Secret
-func (m SecretsManager) View(secret *SecretConfig) error {
+func (m SecretsManager) View(secret *SecretConfig) (string, error) {
 	if !secret.exists() {
-		return errors.New("no such local secrets file exists. try running truss secrets pull")
+		return "", errors.New("no such local secrets file exists. try running truss secrets pull")
 	}
 
-	vault, err := m.vault(*secret)
+	vault, err := m.vault(secret)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	out, err := secret.getDecryptedFromDisk(vault)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	fmt.Print(string(out))
-	return nil
+	return string(out), nil
 }

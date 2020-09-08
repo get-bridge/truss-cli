@@ -9,8 +9,8 @@ import (
 
 // SecretConfigList represents a list of named SecretConfigs
 type SecretConfigList struct {
-	Secrets        []SecretConfig `yaml:"secrets"`
-	TransitKeyName string         `yaml:"transit-key-name"`
+	Secrets        []*SecretConfig `yaml:"secrets"`
+	TransitKeyName string          `yaml:"transit-key-name"`
 }
 
 // SecretConfigListFromFile reads a config file
@@ -37,7 +37,7 @@ func SecretConfigListFromFile(path string) (*SecretConfigList, error) {
 func (l SecretConfigList) Secret(name, kubeconfig string) (*SecretConfig, error) {
 	for _, s := range l.Secrets {
 		if s.Name == name && s.Kubeconfig == kubeconfig {
-			return &s, nil
+			return s, nil
 		}
 	}
 	return nil, fmt.Errorf("secret named '%s' in '%s' not found", name, kubeconfig)
