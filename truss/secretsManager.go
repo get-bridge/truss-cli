@@ -116,15 +116,7 @@ func (m SecretsManager) Push(secret *SecretConfig) error {
 	}
 	defer vault.ClosePortForward()
 
-	secrets, err := secret.getMapFromDisk(vault)
-	if err != nil {
-		return err
-	}
-
-	for path, data := range secrets {
-		m.write(vault, secret, path, data)
-	}
-	return nil
+	return secret.write(vault)
 }
 
 // PullAll pulls all environments
@@ -172,7 +164,7 @@ func (m SecretsManager) kubectl(secret *SecretConfig) (*KubectlCmd, error) {
 }
 
 // vault creates a proxied Vault client
-func (m SecretsManager) vault(secret *SecretConfig) (*VaultCmd, error) {
+func (m SecretsManager) vault(secret *SecretConfig) (VaultCmd, error) {
 	kubectl, err := m.kubectl(secret)
 	if err != nil {
 		return nil, err
@@ -182,7 +174,7 @@ func (m SecretsManager) vault(secret *SecretConfig) (*VaultCmd, error) {
 }
 
 // getMapFromVault returns a collection of secrets as a map
-func (m SecretsManager) getMapFromVault(vault *VaultCmd, secret *SecretConfig) (map[string]map[string]string, error) {
+func (m SecretsManager) getMapFromVault(vault VaultCmd, secret *SecretConfig) (map[string]map[string]string, error) {
 	out := map[string]map[string]string{}
 
 	list, err := vault.Run([]string{
@@ -228,7 +220,7 @@ func (m SecretsManager) getMapFromVault(vault *VaultCmd, secret *SecretConfig) (
 
 // View Secret
 func (m SecretsManager) View(secret *SecretConfig) (string, error) {
-	if !secret.exists() {
+	if !secret.existsOnDisk() {
 		return "", errors.New("no such local secrets file exists. try running truss secrets pull")
 	}
 

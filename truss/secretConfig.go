@@ -21,15 +21,15 @@ type SecretConfig struct {
 }
 
 // exists determines whether the local secrets file exists
-func (s SecretConfig) exists() bool {
+func (s SecretConfig) existsOnDisk() bool {
 	_, err := os.Stat(s.FilePath)
 
 	return err == nil
 }
 
 // getDecryptedFromDisk returns the decrypted yaml from disk
-func (s SecretConfig) getDecryptedFromDisk(vault *VaultCmd) ([]byte, error) {
-	if !s.exists() {
+func (s SecretConfig) getDecryptedFromDisk(vault VaultCmd) ([]byte, error) {
+	if !s.existsOnDisk() {
 		return []byte("secrets: {}"), nil
 	}
 
@@ -42,7 +42,7 @@ func (s SecretConfig) getDecryptedFromDisk(vault *VaultCmd) ([]byte, error) {
 }
 
 // getMapFromDisk returns a collection of secrets as a map
-func (s SecretConfig) getMapFromDisk(vault *VaultCmd) (map[string]map[string]string, error) {
+func (s SecretConfig) getMapFromDisk(vault VaultCmd) (map[string]map[string]string, error) {
 	raw, err := s.getDecryptedFromDisk(vault)
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (s SecretConfig) getMapFromDisk(vault *VaultCmd) (map[string]map[string]str
 }
 
 // encryptAndSaveToDisk encrypts and saves to disk
-func (s SecretConfig) encryptAndSaveToDisk(vault *VaultCmd, raw []byte) error {
+func (s SecretConfig) encryptAndSaveToDisk(vault VaultCmd, raw []byte) error {
 	enc, err := vault.Encrypt(s.transitKeyName, raw)
 	if err != nil {
 		return err
@@ -69,7 +69,7 @@ func (s SecretConfig) encryptAndSaveToDisk(vault *VaultCmd, raw []byte) error {
 }
 
 // writeMapToDisk serializes a collection of secrets and writes them encrypted to disk
-func (s SecretConfig) writeMapToDisk(vault *VaultCmd, secrets map[string]map[string]string) error {
+func (s SecretConfig) writeMapToDisk(vault VaultCmd, secrets map[string]map[string]string) error {
 	out := map[string]map[string]map[string]string{
 		"secrets": secrets,
 	}
@@ -88,12 +88,23 @@ func (s SecretConfig) writeMapToDisk(vault *VaultCmd, secrets map[string]map[str
 }
 
 // Write writes a secret to Vault
-func (m SecretsManager) write(vault *VaultCmd, secret *SecretConfig, dst string, data map[string]string) error {
-	args := []string{"kv", "put", path.Join(secret.VaultPath, dst)}
-	for k, v := range data {
-		args = append(args, fmt.Sprintf("%s=%s", k, v))
+func (s SecretConfig) write(vault VaultCmd) error {
+	secrets, err := s.getMapFromDisk(vault)
+	if err != nil {
+		return err
 	}
 
-	_, err := vault.Run(args)
-	return err
+	for key, data := range secrets {
+		args := []string{"kv", "put", path.Join(s.VaultPath, key)}
+		for k, v := range data {
+			args = append(args, fmt.Sprintf("%s=%s", k, v))
+		}
+
+		_, err := vault.Run(args)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

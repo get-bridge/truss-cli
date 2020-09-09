@@ -16,7 +16,10 @@ func TestVault(t *testing.T) {
 			vaultrole := os.Getenv("TEST_VAULT_ROLE")
 			auth = VaultAuthAWS(vaultrole, awsrole)
 		}
-		vault := Vault(Kubectl(""), auth)
+		vault := VaultCmdImpl{
+			kubectl: Kubectl(""),
+			auth:    auth,
+		}
 
 		Convey("PortForward", func() {
 			Convey("runs no errors", func() {
