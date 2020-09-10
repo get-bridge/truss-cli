@@ -28,3 +28,7 @@ func (*mockVault) Decrypt(transitKeyName string, encrypted []byte) ([]byte, erro
 func (*mockVault) Encrypt(transitKeyName string, raw []byte) ([]byte, error) {
 	return append(raw, []byte("-encrypted")...), nil
 }
+
+func (*mockVault) GetToken() (string, error) {
+	return "", nil
+}

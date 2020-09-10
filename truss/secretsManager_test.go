@@ -46,11 +46,10 @@ secrets:
 
 		firstSecret := sm.SecretConfigList.Secrets[0]
 		So(firstSecret, ShouldNotBeNil)
-		So(firstSecret.transitKeyName, ShouldEqual, "foo-transit")
 
 		vault, err := sm.vault(firstSecret)
 		So(err, ShouldBeNil)
-		err = firstSecret.encryptAndSaveToDisk(vault, []byte(secretsFileContent))
+		err = firstSecret.encryptAndSaveToDisk(vault, sm.TransitKeyName, []byte(secretsFileContent))
 		So(err, ShouldBeNil)
 
 		// TODO how do we deal with $EDITOR
@@ -68,7 +67,7 @@ secrets:
 
 		Convey("Pull", func() {
 			Convey("errors if secret invalid", func() {
-				secondSecret := &SecretConfig{}
+				secondSecret := &SecretFileConfig{}
 				err := sm.Pull(secondSecret)
 				So(err, ShouldNotBeNil)
 			})
@@ -85,7 +84,7 @@ secrets:
 			err = sm.Pull(firstSecret)
 			So(err, ShouldBeNil)
 
-			bytes, err := firstSecret.getDecryptedFromDisk(vault)
+			bytes, err := firstSecret.getDecryptedFromDisk(vault, sm.TransitKeyName)
 			So(err, ShouldBeNil)
 			So(string(bytes), ShouldEqual, secretsFileContent)
 		})

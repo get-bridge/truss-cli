@@ -21,11 +21,11 @@ var secretsPullCmd = &cobra.Command{
 			return sm.PullAll()
 		}
 
-		var secret *truss.SecretConfig
+		var secret truss.SecretConfig
 		secret, err = findSecret(sm, args, "pull")
 		if err != nil {
 			return err
 		}
-		return sm.Pull(*secret)
+		return sm.Pull(secret)
 	},
 }

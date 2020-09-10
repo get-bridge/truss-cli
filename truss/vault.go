@@ -18,6 +18,7 @@ type VaultCmd interface {
 	Run(args []string) ([]byte, error)
 	Decrypt(transitKeyName string, encrypted []byte) ([]byte, error)
 	Encrypt(transitKeyName string, raw []byte) ([]byte, error)
+	GetToken() (string, error)
 }
 
 // VaultCmdImpl wrapper implementation for hashicorp vault

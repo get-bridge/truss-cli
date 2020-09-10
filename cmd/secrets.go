@@ -15,7 +15,7 @@ var secretsCmd = &cobra.Command{
 	Short: "Manages synchronizing secrets between Vault and the filesystem",
 }
 
-func findSecret(sm *truss.SecretsManager, args []string, verb string) (*truss.SecretConfig, error) {
+func findSecret(sm *truss.SecretsManager, args []string, verb string) (truss.SecretConfig, error) {
 	var name, kubeconfig string
 	if len(args) >= 1 {
 		name = args[0]

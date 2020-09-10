@@ -8,7 +8,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestSecretConfig(t *testing.T) {
+func TestSecretFileConfig(t *testing.T) {
 	Convey("TestSecretConfig", t, func() {
 		fileContent := `secrets:
   firstApp:
@@ -31,8 +31,8 @@ func TestSecretConfig(t *testing.T) {
 		}()
 
 		vault := &mockVault{}
-		defaultConfig := SecretConfig{FilePath: f.Name()}
-		err = defaultConfig.encryptAndSaveToDisk(vault, []byte(fileContent))
+		defaultConfig := SecretFileConfig{filePath: f.Name()}
+		err = defaultConfig.encryptAndSaveToDisk(vault, "", []byte(fileContent))
 		So(err, ShouldBeNil)
 
 		Convey("existsOnDisk", func() {
@@ -42,25 +42,25 @@ func TestSecretConfig(t *testing.T) {
 			})
 
 			Convey("false if empty", func() {
-				ok := SecretConfig{}.existsOnDisk()
+				ok := SecretFileConfig{}.existsOnDisk()
 				So(ok, ShouldBeFalse)
 			})
 
 			Convey("false", func() {
-				ok := SecretConfig{FilePath: "probably-not-a-file"}.existsOnDisk()
+				ok := SecretFileConfig{filePath: "probably-not-a-file"}.existsOnDisk()
 				So(ok, ShouldBeFalse)
 			})
 		})
 
 		Convey("getDecryptedFromDisk", func() {
 			Convey("returns contents", func() {
-				bytes, err := SecretConfig{}.getDecryptedFromDisk(vault)
+				bytes, err := SecretFileConfig{}.getDecryptedFromDisk(vault, "")
 				So(err, ShouldBeNil)
 				So(string(bytes), ShouldEqual, "secrets: {}")
 			})
 
 			Convey("returns default if file doesn't exist", func() {
-				bytes, err := defaultConfig.getDecryptedFromDisk(vault)
+				bytes, err := defaultConfig.getDecryptedFromDisk(vault, "")
 				So(err, ShouldBeNil)
 				So(string(bytes), ShouldEqual, fileContent)
 			})
@@ -68,7 +68,7 @@ func TestSecretConfig(t *testing.T) {
 
 		Convey("getMapFromDisk", func() {
 			Convey("returns map of secrets", func() {
-				m, err := defaultConfig.getMapFromDisk(vault)
+				m, err := defaultConfig.getMapFromDisk(vault, "")
 				So(err, ShouldBeNil)
 				So(m, ShouldResemble, contentsMap)
 			})
@@ -83,7 +83,7 @@ func TestSecretConfig(t *testing.T) {
 					os.Remove(f.Name())
 				}()
 
-				err = SecretConfig{FilePath: f.Name()}.writeMapToDisk(vault, contentsMap)
+				err = SecretFileConfig{filePath: f.Name()}.writeMapToDisk(vault, "", contentsMap)
 				So(err, ShouldBeNil)
 
 				bytes, err := ioutil.ReadFile(f.Name())
@@ -94,7 +94,7 @@ func TestSecretConfig(t *testing.T) {
 
 		Convey("write", func() {
 			Convey("writes to vault", func() {
-				err = defaultConfig.write(vault)
+				err = defaultConfig.write(vault, "")
 				So(err, ShouldBeNil)
 				So(vault.commands, ShouldHaveLength, 2)
 				So(vault.commands, ShouldContain,
