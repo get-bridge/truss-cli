@@ -23,7 +23,7 @@ var secretsEditCmd = &cobra.Command{
 			return err
 		}
 
-		saved, err := sm.Edit(*secret)
+		saved, err := sm.Edit(secret)
 		if err != nil {
 			return err
 		}
@@ -31,11 +31,11 @@ var secretsEditCmd = &cobra.Command{
 			return nil
 		}
 
-		if editPush || prompter.YesNo("Push to environment "+ secret.Name +"?", false) {
+		if editPush || prompter.YesNo("Push to environment "+secret.Name()+"?", false) {
 			if len(args) > 0 {
 				return secretsPushCmd.RunE(cmd, args)
 			} else {
-				newArgs := []string{secret.Name}
+				newArgs := []string{secret.Name()}
 				return secretsPushCmd.RunE(cmd, newArgs)
 			}
 		}

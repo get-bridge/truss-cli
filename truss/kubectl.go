@@ -2,6 +2,7 @@ package truss
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"os"
 	"os/exec"
@@ -35,7 +36,7 @@ func (kubectl *KubectlCmd) PortForward(port, listen, namespace, target string) e
 	}
 
 	if err := kubectl.portForwardCmd.Start(); err != nil {
-		return errors.New(string(err.(*exec.ExitError).Stderr))
+		return fmt.Errorf("Failed to port forward: %v", string(err.(*exec.ExitError).Stderr))
 	}
 
 	waitForPort(listen)

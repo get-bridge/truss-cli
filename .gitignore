@@ -24,4 +24,8 @@ dist/
 secrets.yaml
 /secrets
 
+# terraform
 .terraform
+
+# vscode
+.vscode/

@@ -21,11 +21,11 @@ var secretsPushCmd = &cobra.Command{
 			return sm.PushAll()
 		}
 
-		var secret *truss.SecretConfig
+		var secret truss.SecretConfig
 		secret, err = findSecret(sm, args, "push")
 		if err != nil {
 			return err
 		}
-		return sm.Push(*secret)
+		return sm.Push(secret)
 	},
 }

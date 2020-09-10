@@ -13,6 +13,8 @@ type SecretConfigList struct {
 	TransitKeyName string         `yaml:"transit-key-name"`
 }
 
+var secretConfigFactories = map[string]func(map[string]interface{}) (SecretConfig, error){}
+
 // SecretConfigListFromFile reads a config file
 func SecretConfigListFromFile(path string) (*SecretConfigList, error) {
 	r, err := os.Open(path)
@@ -21,19 +23,53 @@ func SecretConfigListFromFile(path string) (*SecretConfigList, error) {
 	}
 	defer r.Close()
 
-	list := &SecretConfigList{}
-	if err := yaml.NewDecoder(r).Decode(list); err != nil {
+	type UnparseSecretConfigList struct {
+		Secrets        []map[string]interface{} `yaml:"secrets"`
+		TransitKeyName string                   `yaml:"transit-key-name"`
+	}
+
+	unparsedList := &UnparseSecretConfigList{}
+	if err := yaml.NewDecoder(r).Decode(unparsedList); err != nil {
 		return nil, err
+	}
+
+	list := &SecretConfigList{
+		TransitKeyName: unparsedList.TransitKeyName,
+	}
+	for _, s := range unparsedList.Secrets {
+		secret, err := parseSecretConfig(s)
+		if err != nil {
+			return nil, err
+		}
+		list.Secrets = append(list.Secrets, secret)
 	}
 
 	return list, nil
 }
 
+func parseSecretConfig(s map[string]interface{}) (SecretConfig, error) {
+	var secretType string
+	secretTypeInterface, ok := s["type"]
+	if !ok {
+		secretType = "file"
+	} else {
+		secretType, ok = secretTypeInterface.(string)
+		if !ok {
+			return nil, fmt.Errorf("unknown secret type: %v", secretTypeInterface)
+		}
+	}
+	factory, ok := secretConfigFactories[secretType]
+	if !ok {
+		return nil, fmt.Errorf("unknown secret type: %v", secretType)
+	}
+	return factory(s)
+}
+
 // Secret locates a secret by name and kubeconfig
-func (l SecretConfigList) Secret(name, kubeconfig string) (*SecretConfig, error) {
+func (l SecretConfigList) Secret(name, kubeconfig string) (SecretConfig, error) {
 	for _, s := range l.Secrets {
-		if s.Name == name && s.Kubeconfig == kubeconfig {
-			return &s, nil
+		if s.Name() == name && s.Kubeconfig() == kubeconfig {
+			return s, nil
 		}
 	}
 	return nil, fmt.Errorf("secret named '%s' in '%s' not found", name, kubeconfig)
@@ -45,7 +81,7 @@ func (l SecretConfigList) SecretNames() []string {
 	for _, s := range l.Secrets {
 		var dupe bool
 		for _, n := range names {
-			if s.Name == n {
+			if s.Name() == n {
 				dupe = true
 			}
 		}
@@ -53,7 +89,7 @@ func (l SecretConfigList) SecretNames() []string {
 			continue
 		}
 
-		names = append(names, s.Name)
+		names = append(names, s.Name())
 	}
 
 	return names
@@ -63,8 +99,8 @@ func (l SecretConfigList) SecretNames() []string {
 func (l SecretConfigList) SecretKubeconfigs(name string) []string {
 	kubeconfigs := []string{}
 	for _, s := range l.Secrets {
-		if s.Name == name {
-			kubeconfigs = append(kubeconfigs, s.Kubeconfig)
+		if s.Name() == name {
+			kubeconfigs = append(kubeconfigs, s.Kubeconfig())
 		}
 	}
 	return kubeconfigs

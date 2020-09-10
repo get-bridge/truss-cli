@@ -1,7 +1,9 @@
 package truss
 
 import (
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
@@ -9,23 +11,33 @@ import (
 	"github.com/phayes/freeport"
 )
 
-// VaultCmd wrapper for hashicorp vault
-type VaultCmd struct {
+// VaultCmd Interface for interacting with vault
+type VaultCmd interface {
+	PortForward() (string, error)
+	ClosePortForward() error
+	Run(args []string) ([]byte, error)
+	Decrypt(transitKeyName string, encrypted []byte) ([]byte, error)
+	Encrypt(transitKeyName string, raw []byte) ([]byte, error)
+	GetToken() (string, error)
+}
+
+// VaultCmdImpl wrapper implementation for hashicorp vault
+type VaultCmdImpl struct {
 	kubectl       *KubectlCmd
 	auth          VaultAuth
 	portForwarded *string
 }
 
 // Vault wrapper for hashicorp vault
-func Vault(kubectl *KubectlCmd, auth VaultAuth) *VaultCmd {
-	return &VaultCmd{
+func Vault(kubectl *KubectlCmd, auth VaultAuth) VaultCmd {
+	return &VaultCmdImpl{
 		kubectl: kubectl,
 		auth:    auth,
 	}
 }
 
 // PortForward instantiates a port-forward for Vault
-func (vault *VaultCmd) PortForward() (string, error) {
+func (vault *VaultCmdImpl) PortForward() (string, error) {
 	if vault.portForwarded != nil {
 		return *vault.portForwarded, nil
 	}
@@ -41,15 +53,16 @@ func (vault *VaultCmd) PortForward() (string, error) {
 }
 
 // ClosePortForward closes the port forward, if any
-func (vault *VaultCmd) ClosePortForward() error {
+func (vault *VaultCmdImpl) ClosePortForward() error {
 	if vault.portForwarded == nil {
 		return nil
 	}
+	vault.portForwarded = nil
 	return vault.kubectl.ClosePortForward()
 }
 
 // Run run command
-func (vault *VaultCmd) Run(args []string) ([]byte, error) {
+func (vault *VaultCmdImpl) Run(args []string) ([]byte, error) {
 	var port string
 	var err error
 
@@ -77,7 +90,7 @@ func (vault *VaultCmd) Run(args []string) ([]byte, error) {
 }
 
 // GetToken gets a Vaut Token
-func (vault *VaultCmd) GetToken() (string, error) {
+func (vault *VaultCmdImpl) GetToken() (string, error) {
 	if vault.auth == nil {
 		return "", errors.New("vault auth not configured")
 	}
@@ -109,8 +122,46 @@ func execVault(port string, arg ...string) ([]byte, error) {
 	cmd.Env = append(cmd.Env, "VAULT_ADDR=https://localhost:"+port, "VAULT_SKIP_VERIFY=true")
 	output, err := cmd.Output()
 	if err != nil {
-		return nil, errors.New(string(err.(*exec.ExitError).Stderr))
+		return nil, fmt.Errorf("Vault command failed: %v", string(err.(*exec.ExitError).Stderr))
 	}
 
 	return output, nil
+}
+
+// Encrypt shit
+func (vault *VaultCmdImpl) Encrypt(transitKeyName string, raw []byte) ([]byte, error) {
+	if transitKeyName == "" {
+		return nil, errors.New(("Must provide transitkey to encrypt"))
+	}
+	out, err := vault.Run([]string{
+		"write",
+		"-field=ciphertext",
+		"transit/encrypt/" + transitKeyName,
+		"plaintext=" + base64.StdEncoding.EncodeToString(raw),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}
+
+// Decrypt shit
+func (vault *VaultCmdImpl) Decrypt(transitKeyName string, encrypted []byte) ([]byte, error) {
+	if transitKeyName == "" {
+		return nil, errors.New(("Must provide transitkey to decrypt"))
+	}
+	out, err := vault.Run([]string{
+		"write",
+		"-field=plaintext",
+		"transit/decrypt/" + transitKeyName,
+		"ciphertext=" + string(encrypted),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return base64.StdEncoding.DecodeString(string(out))
 }
