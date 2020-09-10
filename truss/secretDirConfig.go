@@ -94,9 +94,12 @@ func (s SecretDirConfig) getMapFromDisk(vault VaultCmd, transitKeyName string) (
 		}
 		bytes, err := vault.Decrypt(transitKeyName, encrypted)
 		if err != nil {
-			return err
+			// if we fail to decrypt, might not be encypted
+			dirData[info.Name()] = string(encrypted)
+		} else {
+			dirData[info.Name()] = string(bytes)
 		}
-		dirData[info.Name()] = string(bytes)
+
 		return nil
 	})
 	if err != nil {
@@ -107,18 +110,13 @@ func (s SecretDirConfig) getMapFromDisk(vault VaultCmd, transitKeyName string) (
 
 // writeMapToDisk serializes a collection of secrets and writes them encrypted to disk
 func (s SecretDirConfig) saveToDiskFromVault(vault VaultCmd, transitKeyName string) error {
-	secretNames, err := vault.ListPath(s.vaultPath)
+	secrets, err := vault.GetMap(s.vaultPath)
 	if err != nil {
 		return err
 	}
 
-	for _, name := range secretNames {
-		secretData, err := vault.GetPath(path.Join(s.vaultPath, name))
-		if err != nil {
-			return err
-		}
-
-		encryptAndSaveToDisk(vault, transitKeyName, path.Join(s.dirPath, name), secretData)
+	for name, secretData := range secrets {
+		encryptAndSaveToDisk(vault, transitKeyName, path.Join(s.dirPath, name), []byte(secretData))
 	}
 
 	return nil

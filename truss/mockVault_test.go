@@ -38,10 +38,6 @@ func (m *mockVault) GetMap(vaultPath string) (map[string]string, error) {
 	return m.secrets[vaultPath].(map[string]string), nil
 }
 
-func (m *mockVault) GetPath(vaultPath string) ([]byte, error) {
-	return m.secrets[vaultPath].([]byte), nil
-}
-
 func (m *mockVault) ListPath(vaultPath string) ([]string, error) {
 	keys := []string{}
 	for k := range m.secrets {

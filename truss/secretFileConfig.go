@@ -73,7 +73,13 @@ func (s SecretFileConfig) getDecryptedFromDisk(vault VaultCmd, transitKeyName st
 		return nil, err
 	}
 
-	return vault.Decrypt(transitKeyName, encrypted)
+	decrypted, err := vault.Decrypt(transitKeyName, encrypted)
+	if err != nil {
+		// if we fail to decrypt, might not be encypted
+		return encrypted, nil
+	}
+
+	return decrypted, nil
 }
 
 func (s SecretFileConfig) getMapFromDisk(vault VaultCmd, transitKeyName string) (map[string]map[string]string, error) {

@@ -80,9 +80,9 @@ func TestSecretDirConfig(t *testing.T) {
 				So(dir, ShouldNotBeEmpty)
 
 				secrets := map[string]interface{}{
-					"a": []byte(aContent),
+					defaultConfig.VaultPath(): contentsMap,
 				}
-				config := SecretDirConfig{dirPath: newDir}
+				config := SecretDirConfig{dirPath: newDir, vaultPath: defaultConfig.vaultPath}
 				err = config.saveToDiskFromVault(&mockVault{secrets: secrets}, "")
 				So(err, ShouldBeNil)
 

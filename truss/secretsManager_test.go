@@ -95,5 +95,21 @@ secrets:
 			So(err, ShouldBeNil)
 			So(secretString, ShouldEqual, secretsFileContent)
 		})
+
+		Convey("EncryptSecret", func() {
+			newFile, err := ioutil.TempFile("", "")
+			So(err, ShouldBeNil)
+			defer os.Remove(newFile.Name())
+
+			newFile.WriteString(secretsFileContent)
+			newFile.Close()
+
+			err = sm.EncryptSecret(SecretFileConfig{filePath: newFile.Name(), kubeconfig: firstSecret.Kubeconfig()})
+			So(err, ShouldBeNil)
+
+			bytes, err := ioutil.ReadFile(newFile.Name())
+			So(err, ShouldBeNil)
+			So(string(bytes), ShouldNotEqual, secretsFileContent)
+		})
 	})
 }

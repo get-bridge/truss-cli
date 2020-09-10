@@ -55,6 +55,7 @@ func init() {
 	secretsPullCmd.Flags().BoolVarP(&pullAll, "all", "a", false, "Pull all environments")
 
 	secretsCmd.AddCommand(secretsEditCmd)
+	secretsCmd.AddCommand(secretsEncryptCmd)
 	secretsCmd.AddCommand(secretsViewCmd)
 	secretsCmd.AddCommand(secretsPushCmd)
 	secretsCmd.AddCommand(secretsPullCmd)

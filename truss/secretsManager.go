@@ -182,3 +182,22 @@ func (m SecretsManager) View(secret SecretConfig) (string, error) {
 
 	return string(out), nil
 }
+
+// EncryptSecret on disk with cypher text from vault
+func (m SecretsManager) EncryptSecret(secret SecretConfig) error {
+	vault, err := m.vault(secret)
+	if err != nil {
+		return err
+	}
+	if _, err := vault.PortForward(); err != nil {
+		return err
+	}
+	defer vault.ClosePortForward()
+
+	secretData, err := secret.getDecryptedFromDisk(vault, m.TransitKeyName)
+	if err != nil {
+		return err
+	}
+
+	return secret.saveToDisk(vault, m.TransitKeyName, secretData)
+}

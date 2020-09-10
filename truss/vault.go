@@ -22,7 +22,6 @@ type VaultCmd interface {
 	Encrypt(transitKeyName string, raw []byte) ([]byte, error)
 	GetToken() (string, error)
 	GetMap(vaultPath string) (map[string]string, error)
-	GetPath(vaultPath string) ([]byte, error)
 	ListPath(vaultPath string) ([]string, error)
 }
 
@@ -186,30 +185,6 @@ func (vault *VaultCmdImpl) GetMap(vaultPath string) (map[string]string, error) {
 	getData := struct {
 		Data struct {
 			Data map[string]string `yaml:"data"`
-		} `yaml:"data"`
-	}{}
-	if err := yaml.NewDecoder(bytes.NewReader(get)).Decode(&getData); err != nil {
-		return nil, err
-	}
-
-	return getData.Data.Data, nil
-}
-
-// GetPath returns a vaultPath as a []byte
-func (vault *VaultCmdImpl) GetPath(vaultPath string) ([]byte, error) {
-	get, err := vault.Run([]string{
-		"kv",
-		"get",
-		"-format=yaml",
-		vaultPath,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	getData := struct {
-		Data struct {
-			Data []byte `yaml:"data"`
 		} `yaml:"data"`
 	}{}
 	if err := yaml.NewDecoder(bytes.NewReader(get)).Decode(&getData); err != nil {
