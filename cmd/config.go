@@ -29,13 +29,15 @@ func getKubeconfigName() (string, error) {
 }
 
 func getKubeconfig() (string, error) {
-	var kubeconfigDir string
-	kubeconfigDir, err := getKubeDir()
+	kubeconfig, err := getKubeconfigName()
 	if err != nil {
 		return "", err
 	}
+	if kubeconfig == "" {
+		return "", nil
+	}
 
-	kubeconfig, err := getKubeconfigName()
+	kubeconfigDir, err := getKubeDir()
 	if err != nil {
 		return "", err
 	}
