@@ -9,7 +9,6 @@ import (
 
 func TestVault(t *testing.T) {
 	Convey("Vault", t, func() {
-
 		var auth VaultAuth
 		awsrole, ok := os.LookupEnv("TEST_AWS_ROLE")
 		if ok {
@@ -46,7 +45,7 @@ func TestVault(t *testing.T) {
 			Convey("forwards errors", func() {
 				_, err := vault.Run([]string{})
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldStartWith, "Usage: vault")
+				So(err.Error(), ShouldStartWith, "Vault command failed:")
 			})
 		})
 
@@ -79,6 +78,17 @@ func TestVault(t *testing.T) {
 			decrypted, err := vault.Decrypt(transitKeyName, encrypted)
 			So(err, ShouldBeNil)
 			So(string(decrypted), ShouldEqual, input)
+		})
+
+		Convey("GetMap", func() {
+			vaultPath := "secret/bridge/truss-cli-test/getMap"
+
+			_, err := vault.Run([]string{"kv", "put", vaultPath, "foo=bar"})
+			So(err, ShouldBeNil)
+
+			data, err := vault.GetMap(vaultPath)
+			So(err, ShouldBeNil)
+			So(data, ShouldResemble, map[string]string{"foo": "bar"})
 		})
 	})
 }

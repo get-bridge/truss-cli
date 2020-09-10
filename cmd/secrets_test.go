@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+	"io/ioutil"
 	"os"
 	"testing"
 
@@ -13,8 +15,25 @@ func TestSecrets(t *testing.T) {
 	Convey("findSecret", t, func() {
 		secretName := "secret-name"
 		kubeconfigName := "kube-config-name"
+		secretsFileContent := fmt.Sprintf(`
+transit-key-name: omg-bbq
+
+secrets:
+- name: %v
+  kubeconfig: %v
+`, secretName, kubeconfigName)
 
 		viper.Reset()
+
+		// save to tmp secret
+		tmpFile, err := ioutil.TempFile("", "")
+		So(err, ShouldBeNil)
+		defer os.Remove(tmpFile.Name())
+		tmpFile.WriteString(secretsFileContent)
+		tmpFile.Close()
+
+		err = os.Setenv("TRUSS_SECRETS_FILE", tmpFile.Name())
+		So(err, ShouldBeNil)
 
 		sm, err := truss.NewSecretsManager(os.Getenv("EDITOR"), nil)
 		So(err, ShouldBeNil)
@@ -22,7 +41,7 @@ func TestSecrets(t *testing.T) {
 		Convey("runs no errors", func() {
 			config, err := findSecret(sm, []string{secretName}, "pull")
 			So(err, ShouldBeNil)
-			So(config.Name, ShouldEqual, "secret-name")
+			So(config.Name(), ShouldEqual, "secret-name")
 		})
 
 		Convey("provided with explicit kubeconfig name", func() {
@@ -31,7 +50,7 @@ func TestSecrets(t *testing.T) {
 			Convey("runs no errors", func() {
 				config, err := findSecret(sm, args, "pull")
 				So(err, ShouldBeNil)
-				So(config.Name, ShouldEqual, "secret-name")
+				So(config.Name(), ShouldEqual, "secret-name")
 			})
 
 			Convey("errors if unknown env specified", func() {

@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"io/ioutil"
+	"os"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -10,6 +12,13 @@ import (
 func TestSecretsView(t *testing.T) {
 	Convey("secrets view", t, func() {
 		c := &cobra.Command{}
+
+		tmpFile, err := ioutil.TempFile("", "")
+		So(err, ShouldBeNil)
+		defer os.Remove(tmpFile.Name())
+		tmpFile.WriteString("transit-key-name: omg-bbq")
+		err = os.Setenv("TRUSS_SECRETS_FILE", tmpFile.Name())
+		So(err, ShouldNotBeNil)
 
 		Convey("errors if no such configuration", func() {
 			err := secretsViewCmd.RunE(c, []string{"secret-name", "kubeconfig-name"})

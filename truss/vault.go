@@ -1,6 +1,7 @@
 package truss
 
 import (
+	"bytes"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/phayes/freeport"
+	"gopkg.in/yaml.v2"
 )
 
 // VaultCmd Interface for interacting with vault
@@ -19,6 +21,9 @@ type VaultCmd interface {
 	Decrypt(transitKeyName string, encrypted []byte) ([]byte, error)
 	Encrypt(transitKeyName string, raw []byte) ([]byte, error)
 	GetToken() (string, error)
+	GetMap(vaultPath string) (map[string]string, error)
+	GetPath(vaultPath string) ([]byte, error)
+	ListPath(vaultPath string) ([]string, error)
 }
 
 // VaultCmdImpl wrapper implementation for hashicorp vault
@@ -164,4 +169,72 @@ func (vault *VaultCmdImpl) Decrypt(transitKeyName string, encrypted []byte) ([]b
 	}
 
 	return base64.StdEncoding.DecodeString(string(out))
+}
+
+// GetMap returns a vaultPath as a map
+func (vault *VaultCmdImpl) GetMap(vaultPath string) (map[string]string, error) {
+	get, err := vault.Run([]string{
+		"kv",
+		"get",
+		"-format=yaml",
+		vaultPath,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	getData := struct {
+		Data struct {
+			Data map[string]string `yaml:"data"`
+		} `yaml:"data"`
+	}{}
+	if err := yaml.NewDecoder(bytes.NewReader(get)).Decode(&getData); err != nil {
+		return nil, err
+	}
+
+	return getData.Data.Data, nil
+}
+
+// GetPath returns a vaultPath as a []byte
+func (vault *VaultCmdImpl) GetPath(vaultPath string) ([]byte, error) {
+	get, err := vault.Run([]string{
+		"kv",
+		"get",
+		"-format=yaml",
+		vaultPath,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	getData := struct {
+		Data struct {
+			Data []byte `yaml:"data"`
+		} `yaml:"data"`
+	}{}
+	if err := yaml.NewDecoder(bytes.NewReader(get)).Decode(&getData); err != nil {
+		return nil, err
+	}
+
+	return getData.Data.Data, nil
+}
+
+// ListPath returns a vaultPath as a map
+func (vault *VaultCmdImpl) ListPath(vaultPath string) ([]string, error) {
+	list, err := vault.Run([]string{
+		"kv",
+		"list",
+		"-format=yaml",
+		vaultPath,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	secrets := []string{}
+	if err := yaml.NewDecoder(bytes.NewReader(list)).Decode(&secrets); err != nil {
+		return nil, err
+	}
+
+	return secrets, nil
 }

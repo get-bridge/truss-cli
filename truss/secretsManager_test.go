@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -49,7 +50,7 @@ secrets:
 
 		vault, err := sm.vault(firstSecret)
 		So(err, ShouldBeNil)
-		err = firstSecret.encryptAndSaveToDisk(vault, sm.TransitKeyName, []byte(secretsFileContent))
+		err = encryptAndSaveToDisk(vault, sm.TransitKeyName, path.Join(tmp, "secrets.file"), []byte(secretsFileContent))
 		So(err, ShouldBeNil)
 
 		// TODO how do we deal with $EDITOR
