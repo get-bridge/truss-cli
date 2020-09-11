@@ -1,7 +1,6 @@
 package truss
 
 import (
-	"bytes"
 	"errors"
 	"io/ioutil"
 	"os"
@@ -10,7 +9,6 @@ import (
 
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v2"
 )
 
 // SecretsManager syncrhonizes secrets between the filesystem and Vault
@@ -88,9 +86,7 @@ func (m SecretsManager) Edit(secret SecretConfig) (bool, error) {
 	if err != nil {
 		return true, err
 	}
-	if err := secret.encryptAndSaveToDisk(vault, m.TransitKeyName, raw); err != nil {
-		return true, err
-	}
+	secret.saveToDisk(vault, m.TransitKeyName, raw)
 
 	return true, nil
 }
@@ -116,7 +112,7 @@ func (m SecretsManager) Push(secret SecretConfig) error {
 	}
 	defer vault.ClosePortForward()
 
-	return secret.write(vault, m.TransitKeyName)
+	return secret.writeToVault(vault, m.TransitKeyName)
 }
 
 // PullAll pulls all environments
@@ -140,12 +136,7 @@ func (m SecretsManager) Pull(secret SecretConfig) error {
 	}
 	defer vault.ClosePortForward()
 
-	p, err := m.getMapFromVault(vault, secret)
-	if err != nil {
-		return err
-	}
-
-	return secret.writeMapToDisk(vault, m.TransitKeyName, p)
+	return secret.saveToDiskFromVault(vault, m.TransitKeyName)
 }
 
 // kubectl creates a Kubectl client
@@ -173,51 +164,6 @@ func (m SecretsManager) vault(secret SecretConfig) (VaultCmd, error) {
 	return Vault(kubectl, m.VaultAuth), nil
 }
 
-// getMapFromVault returns a collection of secrets as a map
-func (m SecretsManager) getMapFromVault(vault VaultCmd, secret SecretConfig) (map[string]map[string]string, error) {
-	out := map[string]map[string]string{}
-
-	list, err := vault.Run([]string{
-		"kv",
-		"list",
-		"-format=yaml",
-		secret.VaultPath(),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	secrets := []string{}
-	if err := yaml.NewDecoder(bytes.NewReader(list)).Decode(&secrets); err != nil {
-		return nil, err
-	}
-
-	for _, s := range secrets {
-		get, err := vault.Run([]string{
-			"kv",
-			"get",
-			"-format=yaml",
-			path.Join(secret.VaultPath(), s),
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		getData := struct {
-			Data struct {
-				Data map[string]string `yaml:"data"`
-			} `yaml:"data"`
-		}{}
-		if err := yaml.NewDecoder(bytes.NewReader(get)).Decode(&getData); err != nil {
-			return nil, err
-		}
-
-		out[s] = getData.Data.Data
-	}
-
-	return out, nil
-}
-
 // View Secret
 func (m SecretsManager) View(secret SecretConfig) (string, error) {
 	if !secret.existsOnDisk() {
@@ -235,4 +181,23 @@ func (m SecretsManager) View(secret SecretConfig) (string, error) {
 	}
 
 	return string(out), nil
+}
+
+// EncryptSecret on disk with cypher text from vault
+func (m SecretsManager) EncryptSecret(secret SecretConfig) error {
+	vault, err := m.vault(secret)
+	if err != nil {
+		return err
+	}
+	if _, err := vault.PortForward(); err != nil {
+		return err
+	}
+	defer vault.ClosePortForward()
+
+	secretData, err := secret.getDecryptedFromDisk(vault, m.TransitKeyName)
+	if err != nil {
+		return err
+	}
+
+	return secret.saveToDisk(vault, m.TransitKeyName, secretData)
 }

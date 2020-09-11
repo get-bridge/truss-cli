@@ -33,8 +33,8 @@ secrets:
 			Convey("returns secret", func() {
 				config, err := list.Secret("secret-name", "kube-config-name")
 				So(err, ShouldBeNil)
-				So(config.Name, ShouldEqual, "secret-name")
-				So(config.Kubeconfig, ShouldEqual, "kube-config-name")
+				So(config.Name(), ShouldEqual, "secret-name")
+				So(config.Kubeconfig(), ShouldEqual, "kube-config-name")
 			})
 		})
 

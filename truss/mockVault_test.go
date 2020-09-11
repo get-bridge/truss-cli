@@ -5,6 +5,7 @@ import "strings"
 type mockVault struct {
 	// mock saved vault commands
 	commands [][]string
+	secrets  map[string]interface{}
 }
 
 func (*mockVault) PortForward() (string, error) {
@@ -31,4 +32,16 @@ func (*mockVault) Encrypt(transitKeyName string, raw []byte) ([]byte, error) {
 
 func (*mockVault) GetToken() (string, error) {
 	return "", nil
+}
+
+func (m *mockVault) GetMap(vaultPath string) (map[string]string, error) {
+	return m.secrets[vaultPath].(map[string]string), nil
+}
+
+func (m *mockVault) ListPath(vaultPath string) ([]string, error) {
+	keys := []string{}
+	for k := range m.secrets {
+		keys = append(keys, k)
+	}
+	return keys, nil
 }

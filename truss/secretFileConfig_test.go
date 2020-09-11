@@ -32,7 +32,7 @@ func TestSecretFileConfig(t *testing.T) {
 
 		vault := &mockVault{}
 		defaultConfig := SecretFileConfig{filePath: f.Name()}
-		err = defaultConfig.encryptAndSaveToDisk(vault, "", []byte(fileContent))
+		err = encryptAndSaveToDisk(vault, "", f.Name(), []byte(fileContent))
 		So(err, ShouldBeNil)
 
 		Convey("existsOnDisk", func() {
@@ -74,27 +74,35 @@ func TestSecretFileConfig(t *testing.T) {
 			})
 		})
 
-		Convey("writeMapToDisk", func() {
+		Convey("saveToDiskFromVault", func() {
 			Convey("writes encrypted secrets", func() {
-				f, err := ioutil.TempFile("", "")
+				newFile, err := ioutil.TempFile("", "")
 				So(err, ShouldBeNil)
 				defer func() {
 					f.Close()
 					os.Remove(f.Name())
 				}()
 
-				err = SecretFileConfig{filePath: f.Name()}.writeMapToDisk(vault, "", contentsMap)
+				secrets := map[string]interface{}{
+					"firstApp": map[string]string{
+						"firstSecret":  "1",
+						"secondSecret": "2",
+					},
+					"secondApp": map[string]string{},
+				}
+				config := SecretFileConfig{filePath: newFile.Name()}
+				err = config.saveToDiskFromVault(&mockVault{secrets: secrets}, "")
 				So(err, ShouldBeNil)
 
-				bytes, err := ioutil.ReadFile(f.Name())
+				bytes, err := ioutil.ReadFile(newFile.Name())
 				So(err, ShouldBeNil)
 				So(string(bytes), ShouldEqual, fileContent+"-encrypted")
 			})
 		})
 
-		Convey("write", func() {
+		Convey("writeToVault", func() {
 			Convey("writes to vault", func() {
-				err = defaultConfig.write(vault, "")
+				err = defaultConfig.writeToVault(vault, "")
 				So(err, ShouldBeNil)
 				So(vault.commands, ShouldHaveLength, 2)
 				So(vault.commands, ShouldContain,
@@ -103,6 +111,24 @@ func TestSecretFileConfig(t *testing.T) {
 				So(vault.commands, ShouldContain,
 					[]string{"kv", "put", "secondApp"},
 				)
+			})
+		})
+
+		Convey("saveToDisk", func() {
+			Convey("writes to disk", func() {
+				newFile, err := ioutil.TempFile("", "")
+				So(err, ShouldBeNil)
+				defer func() {
+					f.Close()
+					os.Remove(f.Name())
+				}()
+
+				err = SecretFileConfig{filePath: newFile.Name()}.saveToDisk(vault, "", []byte(fileContent))
+				So(err, ShouldBeNil)
+
+				bytes, err := ioutil.ReadFile(newFile.Name())
+				So(err, ShouldBeNil)
+				So(string(bytes), ShouldEqual, fileContent+"-encrypted")
 			})
 		})
 	})
