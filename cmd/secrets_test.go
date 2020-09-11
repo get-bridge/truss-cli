@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"testing"
 
 	"github.com/instructure-bridge/truss-cli/truss"
@@ -12,10 +13,9 @@ import (
 )
 
 func TestSecrets(t *testing.T) {
-	Convey("findSecret", t, func() {
-		secretName := "secret-name"
-		kubeconfigName := "kube-config-name"
-		secretsFileContent := fmt.Sprintf(`
+	secretName := "secret-name"
+	kubeconfigName := "kube-config-name"
+	secretsFileContent := fmt.Sprintf(`
 transit-key-name: omg-bbq
 
 secrets:
@@ -23,6 +23,52 @@ secrets:
   kubeconfig: %v
 `, secretName, kubeconfigName)
 
+	Convey("newSecretsManager", t, func() {
+		viper.Reset()
+
+		Convey("accepts TRUSS_SECRETS_FILE", func() {
+			viper.Set("TRUSS_SECRETS_FILE", "foo")
+
+			_, err := newSecretsManager()
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "open foo")
+		})
+
+		Convey("find secret in current directory", func() {
+			dir, err := ioutil.TempDir("", "")
+			So(err, ShouldBeNil)
+			defer os.Remove(dir)
+
+			err = ioutil.WriteFile(path.Join(dir, defaultSecretsFileName), []byte(secretsFileContent), 0644)
+			So(err, ShouldBeNil)
+
+			err = os.Chdir(dir)
+			So(err, ShouldBeNil)
+
+			_, err = newSecretsManager()
+			So(err, ShouldBeNil)
+		})
+
+		Convey("find secret in parent directory", func() {
+			dir, err := ioutil.TempDir("", "")
+			So(err, ShouldBeNil)
+			defer os.Remove(dir)
+
+			err = ioutil.WriteFile(path.Join(dir, defaultSecretsFileName), []byte(secretsFileContent), 0644)
+			So(err, ShouldBeNil)
+
+			subDir := path.Join(dir, "foo/bar/baz")
+			err = os.MkdirAll(subDir, 0777)
+			So(err, ShouldBeNil)
+			err = os.Chdir(subDir)
+			So(err, ShouldBeNil)
+
+			_, err = newSecretsManager()
+			So(err, ShouldBeNil)
+		})
+	})
+
+	Convey("findSecret", t, func() {
 		viper.Reset()
 
 		// save to tmp secret
@@ -32,10 +78,7 @@ secrets:
 		tmpFile.WriteString(secretsFileContent)
 		tmpFile.Close()
 
-		err = os.Setenv("TRUSS_SECRETS_FILE", tmpFile.Name())
-		So(err, ShouldBeNil)
-
-		sm, err := truss.NewSecretsManager(os.Getenv("EDITOR"), nil)
+		sm, err := truss.NewSecretsManager(tmpFile.Name(), viper.GetString("EDITOR"), getVaultAuth())
 		So(err, ShouldBeNil)
 
 		Convey("runs no errors", func() {

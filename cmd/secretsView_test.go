@@ -7,6 +7,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 func TestSecretsView(t *testing.T) {
@@ -17,8 +18,7 @@ func TestSecretsView(t *testing.T) {
 		So(err, ShouldBeNil)
 		defer os.Remove(tmpFile.Name())
 		tmpFile.WriteString("transit-key-name: omg-bbq")
-		err = os.Setenv("TRUSS_SECRETS_FILE", tmpFile.Name())
-		So(err, ShouldNotBeNil)
+		viper.Set("TRUSS_SECRETS_FILE", tmpFile.Name())
 
 		Convey("errors if no such configuration", func() {
 			err := secretsViewCmd.RunE(c, []string{"secret-name", "kubeconfig-name"})
