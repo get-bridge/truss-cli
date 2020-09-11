@@ -1,4 +1,4 @@
-package truss
+package integration
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"path"
 	"testing"
 
+	"github.com/instructure-bridge/truss-cli/truss"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -14,40 +15,39 @@ func TestSecretsManager(t *testing.T) {
 	FocusConvey("SecretsManager", t, func() {
 		tmp := os.TempDir()
 
-		secretsContent := fmt.Sprintf(`
-transit-key-name: foo-transit
-
-secrets:
-- name: secret-name
-  filePath: %s/secrets.file
-  vaultPath: secret/bridge/truss-cli-test/file
-  kubeconfig: kubeconfig-truss-nonprod-iad
-`, tmp)
-
+		secretsFileName := path.Join(tmp, "secrets.file")
 		secretsFileContent := `secrets:
   foo:
     a: b
 `
 
+		secretsContent := fmt.Sprintf(`
+transit-key-name: foo-transit
+
+secrets:
+- name: secret-name
+  filePath: %s
+  vaultPath: secret/bridge/truss-cli-test/file
+  kubeconfig: kubeconfig-truss-nonprod-iad
+`, secretsFileName)
+
 		secretsPath := tmp + "/secrets.yaml"
 		err := ioutil.WriteFile(secretsPath, []byte(secretsContent), 0644)
 		So(err, ShouldBeNil)
 
-		var auth VaultAuth
+		var auth truss.VaultAuth
 		awsrole, ok := os.LookupEnv("TEST_AWS_ROLE")
 		if ok {
 			vaultrole := os.Getenv("TEST_VAULT_ROLE")
-			auth = VaultAuthAWS(vaultrole, awsrole)
+			auth = truss.VaultAuthAWS(vaultrole, awsrole)
 		}
-		sm, err := NewSecretsManager(secretsPath, "", auth)
+		sm, err := truss.NewSecretsManager(secretsPath, "", auth)
 		So(err, ShouldBeNil)
 
 		firstSecret := sm.SecretConfigList.Secrets[0]
 		So(firstSecret, ShouldNotBeNil)
 
-		vault, err := sm.vault(firstSecret)
-		So(err, ShouldBeNil)
-		err = encryptAndSaveToDisk(vault, sm.TransitKeyName, path.Join(tmp, "secrets.file"), []byte(secretsFileContent))
+		sm.EncryptSecret(firstSecret)
 		So(err, ShouldBeNil)
 
 		// TODO how do we deal with $EDITOR
@@ -65,7 +65,7 @@ secrets:
 
 		Convey("Pull", func() {
 			Convey("errors if secret invalid", func() {
-				secondSecret := &SecretFileConfig{}
+				secondSecret := &truss.SecretFileConfig{}
 				err := sm.Pull(secondSecret)
 				So(err, ShouldNotBeNil)
 			})
@@ -75,6 +75,7 @@ secrets:
 			err := sm.Push(firstSecret)
 			So(err, ShouldBeNil)
 
+			vault := truss.Vault(firstSecret.Kubeconfig(), sm.VaultAuth)
 			vaultData, err := vault.Run([]string{"kv", "get", "-field=a", "secret/bridge/truss-cli-test/file/foo"})
 			So(err, ShouldBeNil)
 			So(string(vaultData), ShouldEqual, "b")
@@ -82,31 +83,9 @@ secrets:
 			err = sm.Pull(firstSecret)
 			So(err, ShouldBeNil)
 
-			bytes, err := firstSecret.getDecryptedFromDisk(vault, sm.TransitKeyName)
-			So(err, ShouldBeNil)
-			So(string(bytes), ShouldEqual, secretsFileContent)
-		})
-
-		Convey("View", func() {
 			secretString, err := sm.View(firstSecret)
 			So(err, ShouldBeNil)
 			So(secretString, ShouldEqual, secretsFileContent)
-		})
-
-		Convey("EncryptSecret", func() {
-			newFile, err := ioutil.TempFile("", "")
-			So(err, ShouldBeNil)
-			defer os.Remove(newFile.Name())
-
-			newFile.WriteString(secretsFileContent)
-			newFile.Close()
-
-			err = sm.EncryptSecret(SecretFileConfig{filePath: newFile.Name(), kubeconfig: firstSecret.Kubeconfig()})
-			So(err, ShouldBeNil)
-
-			bytes, err := ioutil.ReadFile(newFile.Name())
-			So(err, ShouldBeNil)
-			So(string(bytes), ShouldNotEqual, secretsFileContent)
 		})
 	})
 }

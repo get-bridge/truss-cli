@@ -1,10 +1,11 @@
-package truss
+package integration
 
 import (
 	"fmt"
 	"os"
 	"testing"
 
+	"github.com/instructure-bridge/truss-cli/truss"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -27,7 +28,7 @@ func TestGetGlobalConfigS3(t *testing.T) {
 			key = ".truss.yaml"
 		}
 		tmp := os.TempDir()
-		input := &GetGlobalConfigS3Input{
+		input := &truss.GetGlobalConfigS3Input{
 			Bucket: bucket,
 			Region: region,
 			Role:   awsrole,
@@ -36,7 +37,7 @@ func TestGetGlobalConfigS3(t *testing.T) {
 		}
 
 		Convey("runs with no errors", func() {
-			_, err := GetGlobalConfigS3(input)
+			_, err := truss.GetGlobalConfigS3(input)
 			So(err, ShouldBeNil)
 			_, err = os.Stat(fmt.Sprintf("%s/%s", tmp, key))
 			So(err, ShouldBeNil)

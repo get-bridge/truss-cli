@@ -24,8 +24,7 @@ and open the UI in your browser.`,
 			return err
 		}
 
-		kubectl := truss.Kubectl(kubeconfig)
-		vault := truss.Vault(kubectl, getVaultAuth())
+		vault := truss.Vault(kubeconfig, getVaultAuth())
 
 		port, err := vault.PortForward()
 		if err != nil {

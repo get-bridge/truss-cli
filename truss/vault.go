@@ -33,9 +33,9 @@ type VaultCmdImpl struct {
 }
 
 // Vault wrapper for hashicorp vault
-func Vault(kubectl *KubectlCmd, auth VaultAuth) VaultCmd {
+func Vault(kubeconfig string, auth VaultAuth) VaultCmd {
 	return &VaultCmdImpl{
-		kubectl: kubectl,
+		kubectl: Kubectl(kubeconfig),
 		auth:    auth,
 	}
 }

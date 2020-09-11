@@ -1,9 +1,10 @@
-package truss
+package integration
 
 import (
 	"os"
 	"testing"
 
+	"github.com/instructure-bridge/truss-cli/truss"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -22,7 +23,7 @@ func TestGetKubeconfigS3(t *testing.T) {
 			region = "us-east-2"
 		}
 		tmp := os.TempDir()
-		cmd := GetKubeconfigS3(awsrole, bucket, tmp, region)
+		cmd := truss.GetKubeconfigS3(awsrole, bucket, tmp, region)
 
 		Convey("runs with no errors", func() {
 			err := cmd.Fetch()

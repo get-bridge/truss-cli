@@ -1,24 +1,22 @@
-package truss
+package integration
 
 import (
 	"os"
 	"testing"
 
+	"github.com/instructure-bridge/truss-cli/truss"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestVault(t *testing.T) {
+func TestVaultIntegration(t *testing.T) {
 	Convey("Vault", t, func() {
-		var auth VaultAuth
+		var auth truss.VaultAuth
 		awsrole, ok := os.LookupEnv("TEST_AWS_ROLE")
 		if ok {
 			vaultrole := os.Getenv("TEST_VAULT_ROLE")
-			auth = VaultAuthAWS(vaultrole, awsrole)
+			auth = truss.VaultAuthAWS(vaultrole, awsrole)
 		}
-		vault := VaultCmdImpl{
-			kubectl: Kubectl(""),
-			auth:    auth,
-		}
+		vault := truss.Vault("", auth)
 
 		Convey("PortForward", func() {
 			Convey("runs no errors", func() {
@@ -32,7 +30,6 @@ func TestVault(t *testing.T) {
 
 				err = vault.ClosePortForward()
 				So(err, ShouldBeNil)
-				So(vault.portForwarded, ShouldBeNil)
 			})
 		})
 

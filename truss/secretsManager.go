@@ -135,29 +135,29 @@ func (m SecretsManager) Pull(secret SecretConfig) error {
 	return secret.saveToDiskFromVault(vault, m.TransitKeyName)
 }
 
-// kubectl creates a Kubectl client
-func (m SecretsManager) kubectl(secret SecretConfig) (*KubectlCmd, error) {
+// get kubeconfig name
+func (m SecretsManager) kubeconfig(secret SecretConfig) (string, error) {
 	config := viper.GetStringMap("kubeconfigfiles")
 	directory, ok := config["directory"].(string)
 	if !ok {
 		home, err := homedir.Dir()
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 		directory = home + "/.kube/"
 	}
 
-	return Kubectl(path.Join(directory, secret.Kubeconfig())), nil
+	return path.Join(directory, secret.Kubeconfig()), nil
 }
 
 // vault creates a proxied Vault client
 func (m SecretsManager) vault(secret SecretConfig) (VaultCmd, error) {
-	kubectl, err := m.kubectl(secret)
+	kubeconfig, err := m.kubeconfig(secret)
 	if err != nil {
 		return nil, err
 	}
 
-	return Vault(kubectl, m.VaultAuth), nil
+	return Vault(kubeconfig, m.VaultAuth), nil
 }
 
 // View Secret

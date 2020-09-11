@@ -1,9 +1,10 @@
-package truss
+package integration
 
 import (
 	"os"
 	"testing"
 
+	"github.com/instructure-bridge/truss-cli/truss"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -18,11 +19,11 @@ func TestVaultAuthAws(t *testing.T) {
 			t.Fatalf("Missing env var TEST_VAULT_ROLE")
 		}
 
-		cmd := VaultAuthAWS(vaultrole, awsrole)
+		cmd := truss.VaultAuthAWS(vaultrole, awsrole)
 
 		Convey("Login", func() {
 			Convey("runs no errors", func() {
-				port, err := Vault(Kubectl(""), nil).PortForward()
+				port, err := truss.Vault("", nil).PortForward()
 				So(err, ShouldBeNil)
 
 				err = cmd.Login(port)
