@@ -1,4 +1,4 @@
-package truss
+package integration
 
 import (
 	"strconv"
