@@ -6,18 +6,19 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 func TestWrap(t *testing.T) {
 	Convey("wrap", t, func() {
 		viper.Reset()
+		cmd := &cobra.Command{}
 
 		Convey("runs subcommand", func() {
 			viper.Set("environments", map[string]interface{}{
 				"edge-cmh": "kubeconfig-truss-nonprod-cmh",
 			})
-			cmd := rootCmd
 			buff := bytes.NewBufferString("")
 			cmd.SetOut(buff)
 			cmd.SetArgs([]string{
@@ -28,7 +29,8 @@ func TestWrap(t *testing.T) {
 				"echo",
 				"hello",
 			})
-			cmd.Execute()
+			err := cmd.Execute()
+			So(err, ShouldBeNil)
 			out, _ := ioutil.ReadAll(buff)
 			So(string(out), ShouldEqual, "hello\n")
 		})
@@ -37,7 +39,6 @@ func TestWrap(t *testing.T) {
 			viper.Set("environments", map[string]interface{}{
 				"edge-cmh": "kubeconfig-truss-nonprod-cmh",
 			})
-			cmd := rootCmd
 			buff := bytes.NewBufferString("")
 			cmd.SetOut(buff)
 			errBuff := bytes.NewBufferString("")
@@ -50,7 +51,8 @@ func TestWrap(t *testing.T) {
 				"ls",
 				"asdf",
 			})
-			cmd.Execute()
+			err := cmd.Execute()
+			So(err, ShouldBeNil)
 			out, _ := ioutil.ReadAll(buff)
 			errOut, _ := ioutil.ReadAll(errBuff)
 			So(string(out), ShouldContainSubstring, "Error: exit status 1\n")
@@ -61,13 +63,13 @@ func TestWrap(t *testing.T) {
 			viper.Set("environments", map[string]interface{}{
 				"edge-cmh": "kubeconfig-truss-nonprod-cmh",
 			})
-			cmd := rootCmd
 			buff := bytes.NewBufferString("")
 			cmd.SetOut(buff)
 			cmd.SetArgs([]string{
 				"wrap",
 			})
-			cmd.Execute()
+			err := cmd.Execute()
+			So(err, ShouldBeNil)
 			out, _ := ioutil.ReadAll(buff)
 			So(string(out), ShouldContainSubstring, "Sets KUBECONFIG and then executes the subcommand")
 		})
