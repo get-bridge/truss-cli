@@ -72,6 +72,14 @@ func (vault *VaultCmdImpl) Run(args []string) ([]byte, error) {
 	var port string
 	var err error
 
+	var data interface{}
+	if vault.auth != nil {
+		data, err = vault.auth.LoadCreds()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if vault.portForwarded != nil {
 		port = *vault.portForwarded
 	} else {
@@ -83,7 +91,7 @@ func (vault *VaultCmdImpl) Run(args []string) ([]byte, error) {
 	}
 
 	if vault.auth != nil {
-		if err := vault.auth.Login(port); err != nil {
+		if err := vault.auth.Login(data, port); err != nil {
 			return nil, err
 		}
 	}
@@ -97,26 +105,6 @@ func (vault *VaultCmdImpl) Run(args []string) ([]byte, error) {
 
 // GetToken gets a Vault Token
 func (vault *VaultCmdImpl) GetToken() (string, error) {
-	if vault.auth == nil {
-		return "", errors.New("vault auth not configured")
-	}
-
-	var port string
-	var err error
-	if vault.portForwarded != nil {
-		port = *vault.portForwarded
-	} else {
-		port, err = vault.PortForward()
-		if err != nil {
-			return "", err
-		}
-		defer vault.ClosePortForward()
-	}
-
-	if err := vault.auth.Login(port); err != nil {
-		return "", err
-	}
-
 	out, err := vault.Run([]string{"write", "-wrap-ttl=3m", "-field=wrapping_token", "-force", "auth/token/create"})
 
 	return string(out), err

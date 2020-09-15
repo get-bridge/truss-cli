@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
 )
@@ -22,16 +23,19 @@ func VaultAuthAWS(vaultRole, awsRole string) VaultAuth {
 	}
 }
 
-// Login for VaultAuth interface
-func (auth *vaultAuthAWS) Login(port string) error {
-	// assume aws role
+func (auth *vaultAuthAWS) LoadCreds() (interface{}, error) {
 	sess, err := session.NewSession()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	creds, err := stscreds.NewCredentials(sess, auth.awsRole).Get()
-	if err != nil {
-		return err
+	return stscreds.NewCredentials(sess, auth.awsRole).Get()
+}
+
+// Login for VaultAuth interface
+func (auth *vaultAuthAWS) Login(data interface{}, port string) error {
+	creds, ok := data.(credentials.Value)
+	if !ok {
+		return errors.New("aws login needs creds")
 	}
 
 	cmd := exec.Command("vault", "login", "-method=aws", "role="+auth.vaultRole)
