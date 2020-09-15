@@ -18,4 +18,4 @@ jobs:
         go-version: 1.14
 
     - name: Go test
-      run: go test ./cmd/ ./truss/
+      run: go test ./cmd/ ./truss/ -timeout 5000ms
