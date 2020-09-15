@@ -3,9 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/instructure-bridge/truss-cli/truss"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var secretsViewCmd = &cobra.Command{
@@ -13,7 +11,7 @@ var secretsViewCmd = &cobra.Command{
 	Short: "Views a given environment's secrets on disk",
 	Args:  cobra.MaximumNArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		sm, err := truss.NewSecretsManager(viper.GetString("EDITOR"), getVaultAuth())
+		sm, err := newSecretsManager()
 		if err != nil {
 			return err
 		}

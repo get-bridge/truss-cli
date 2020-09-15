@@ -11,7 +11,7 @@ import (
 )
 
 func TestSecretsManager(t *testing.T) {
-	Convey("SecretsManager", t, func() {
+	FocusConvey("SecretsManager", t, func() {
 		tmp := os.TempDir()
 
 		secretsContent := fmt.Sprintf(`
@@ -33,16 +33,13 @@ secrets:
 		err := ioutil.WriteFile(secretsPath, []byte(secretsContent), 0644)
 		So(err, ShouldBeNil)
 
-		err = os.Setenv("TRUSS_SECRETS_FILE", secretsPath)
-		So(err, ShouldBeNil)
-
 		var auth VaultAuth
 		awsrole, ok := os.LookupEnv("TEST_AWS_ROLE")
 		if ok {
 			vaultrole := os.Getenv("TEST_VAULT_ROLE")
 			auth = VaultAuthAWS(vaultrole, awsrole)
 		}
-		sm, err := NewSecretsManager("", auth)
+		sm, err := NewSecretsManager(secretsPath, "", auth)
 		So(err, ShouldBeNil)
 
 		firstSecret := sm.SecretConfigList.Secrets[0]

@@ -3,6 +3,9 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path"
+	"path/filepath"
 
 	"github.com/Songmu/prompter"
 	"github.com/instructure-bridge/truss-cli/truss"
@@ -13,6 +16,33 @@ import (
 var secretsCmd = &cobra.Command{
 	Use:   "secrets",
 	Short: "Manages synchronizing secrets between Vault and the filesystem",
+}
+
+var defaultSecretsFileName = "secrets.yaml"
+
+func newSecretsManager() (*truss.SecretsManager, error) {
+	secretsFile := viper.GetString("TRUSS_SECRETS_FILE")
+	if secretsFile == "" {
+		dir, err := os.Getwd()
+		if err != nil {
+			return nil, err
+		}
+		foundSecrets := false
+		for !foundSecrets {
+			fileInfo, err := os.Stat(path.Join(dir, defaultSecretsFileName))
+			if err != nil {
+				dir = filepath.Dir(dir)
+				if dir == "/" {
+					return nil, errors.New("Could not find secrets.yaml")
+				}
+			} else {
+				secretsFile = path.Join(dir, fileInfo.Name())
+				foundSecrets = true
+			}
+		}
+	}
+
+	return truss.NewSecretsManager(secretsFile, viper.GetString("EDITOR"), getVaultAuth())
 }
 
 func findSecret(sm *truss.SecretsManager, args []string, verb string) (truss.SecretConfig, error) {

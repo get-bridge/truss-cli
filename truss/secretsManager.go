@@ -19,11 +19,7 @@ type SecretsManager struct {
 }
 
 // NewSecretsManager creates a new SecretsManager
-func NewSecretsManager(editor string, vaultAuth VaultAuth) (*SecretsManager, error) {
-	secretsFile := os.Getenv("TRUSS_SECRETS_FILE")
-	if secretsFile == "" {
-		secretsFile = "./secrets.yaml"
-	}
+func NewSecretsManager(secretsFile string, editor string, vaultAuth VaultAuth) (*SecretsManager, error) {
 	l, err := SecretConfigListFromFile(secretsFile)
 	if err != nil {
 		return nil, err

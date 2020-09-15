@@ -3,7 +3,6 @@ package cmd
 import (
 	"github.com/instructure-bridge/truss-cli/truss"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var pullAll bool
@@ -12,7 +11,7 @@ var secretsPullCmd = &cobra.Command{
 	Short: "Pulls a given environment's secrets from its corresponding Vault",
 	Args:  cobra.MaximumNArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		sm, err := truss.NewSecretsManager(viper.GetString("EDITOR"), getVaultAuth())
+		sm, err := newSecretsManager()
 		if err != nil {
 			return err
 		}
