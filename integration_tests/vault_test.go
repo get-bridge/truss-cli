@@ -8,7 +8,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestVaultIntegration(t *testing.T) {
+func TestVault(t *testing.T) {
 	Convey("Vault", t, func() {
 		var auth truss.VaultAuth
 		awsrole, ok := os.LookupEnv("TEST_AWS_ROLE")

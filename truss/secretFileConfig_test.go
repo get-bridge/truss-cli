@@ -1,7 +1,6 @@
 package truss
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -108,7 +107,6 @@ func TestSecretFileConfig(t *testing.T) {
 				err = defaultConfig.writeToVault(vault, "")
 				So(err, ShouldBeNil)
 				So(vault.commands, ShouldHaveLength, 2)
-				fmt.Println("vault.commands", vault.commands)
 				So(vault.commands, ShouldContain,
 					[]string{"kv", "put", "firstApp", "firstSecret=1"},
 				)
