@@ -27,16 +27,18 @@ type VaultCmd interface {
 
 // VaultCmdImpl wrapper implementation for hashicorp vault
 type VaultCmdImpl struct {
-	kubectl       *KubectlCmd
-	auth          VaultAuth
-	portForwarded *string
+	kubectl        *KubectlCmd
+	auth           VaultAuth
+	portForwarded  *string
+	timeoutSeconds int
 }
 
 // Vault wrapper for hashicorp vault
 func Vault(kubeconfig string, auth VaultAuth) VaultCmd {
 	return &VaultCmdImpl{
-		kubectl: Kubectl(kubeconfig),
-		auth:    auth,
+		kubectl:        Kubectl(kubeconfig),
+		auth:           auth,
+		timeoutSeconds: 15,
 	}
 }
 
@@ -53,7 +55,7 @@ func (vault *VaultCmdImpl) PortForward() (string, error) {
 	port := strconv.Itoa(p)
 	vault.portForwarded = &port
 
-	return port, vault.kubectl.PortForward("8200", port, "vault", "service/vault")
+	return port, vault.kubectl.PortForward("8200", port, "vault", "service/vault", vault.timeoutSeconds)
 }
 
 // ClosePortForward closes the port forward, if any
@@ -93,7 +95,7 @@ func (vault *VaultCmdImpl) Run(args []string) ([]byte, error) {
 	return output, nil
 }
 
-// GetToken gets a Vaut Token
+// GetToken gets a Vault Token
 func (vault *VaultCmdImpl) GetToken() (string, error) {
 	if vault.auth == nil {
 		return "", errors.New("vault auth not configured")

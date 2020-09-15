@@ -26,7 +26,7 @@ func Kubectl(kubeconfig string) *KubectlCmd {
 }
 
 // PortForward kubectl port-forward
-func (kubectl *KubectlCmd) PortForward(port, listen, namespace, target string) error {
+func (kubectl *KubectlCmd) PortForward(port, listen, namespace, target string, timeoutSeconds int) error {
 	log.Debugln("Opening connection port forward for", port)
 	argsWithCmd := []string{"port-forward", "-n=" + namespace, target, listen + ":" + port}
 	kubectl.portForwardCmd = exec.Command("kubectl", argsWithCmd...)
@@ -39,7 +39,7 @@ func (kubectl *KubectlCmd) PortForward(port, listen, namespace, target string) e
 		return fmt.Errorf("Failed to port forward: %v", string(err.(*exec.ExitError).Stderr))
 	}
 
-	waitForPort(listen)
+	waitForPort(listen, timeoutSeconds)
 
 	return nil
 }
@@ -65,10 +65,9 @@ func (kubectl *KubectlCmd) Run(arg ...string) ([]byte, error) {
 	return bytes, nil
 }
 
-func waitForPort(port string) {
+func waitForPort(port string, timeoutSeconds int) {
 	log.Debugln("Waiting for port", port)
-	timeout := 15
-	for i := 0; i < timeout; i++ {
+	for i := 0; i < timeoutSeconds; i++ {
 		conn, err := net.Dial("tcp", ":"+port)
 		if conn != nil {
 			defer conn.Close()

@@ -4,13 +4,14 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/instructure-bridge/truss-cli/truss"
 	"github.com/phayes/freeport"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestKubectl(t *testing.T) {
 	Convey("Kubectl", t, func() {
-		cmd := Kubectl("")
+		kubectl := truss.Kubectl("")
 
 		Convey("PortForward", func() {
 			Convey("runs with no errors", func() {
@@ -18,17 +19,10 @@ func TestKubectl(t *testing.T) {
 				So(err, ShouldBeNil)
 				port := strconv.Itoa(p)
 
-				err = cmd.PortForward(port, port, "namespace", "target")
+				err = kubectl.PortForward(port, port, "namespace", "target", 15)
 				So(err, ShouldBeNil)
 
-				err = cmd.ClosePortForward()
-				So(err, ShouldBeNil)
-			})
-		})
-
-		Convey("Run", func() {
-			Convey("runs with no errors", func() {
-				_, err := cmd.Run()
+				err = kubectl.ClosePortForward()
 				So(err, ShouldBeNil)
 			})
 		})

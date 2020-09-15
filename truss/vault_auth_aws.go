@@ -25,7 +25,10 @@ func VaultAuthAWS(vaultRole, awsRole string) VaultAuth {
 // Login for VaultAuth interface
 func (auth *vaultAuthAWS) Login(port string) error {
 	// assume aws role
-	sess := session.Must(session.NewSession())
+	sess, err := session.NewSession()
+	if err != nil {
+		return err
+	}
 	creds, err := stscreds.NewCredentials(sess, auth.awsRole).Get()
 	if err != nil {
 		return err

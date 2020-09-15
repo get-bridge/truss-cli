@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"io/ioutil"
 	"os"
 	"testing"
 
@@ -22,17 +23,15 @@ func TestGetKubeconfigS3(t *testing.T) {
 		if !ok {
 			region = "us-east-2"
 		}
-		tmp := os.TempDir()
+		tmp, err := ioutil.TempDir("", "")
+		So(err, ShouldBeNil)
+		defer os.Remove(tmp)
+
 		cmd := truss.GetKubeconfigS3(awsrole, bucket, tmp, region)
 
 		Convey("runs with no errors", func() {
 			err := cmd.Fetch()
 			So(err, ShouldBeNil)
 		})
-
-		// Some reason this breaks allthethings
-		// Reset(func() {
-		// 	os.RemoveAll(tmp)
-		// })
 	})
 }

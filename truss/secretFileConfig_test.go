@@ -1,6 +1,7 @@
 package truss
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -13,15 +14,16 @@ func TestSecretFileConfig(t *testing.T) {
 		fileContent := `secrets:
   firstApp:
     firstSecret: "1"
+  secondApp:
     secondSecret: "2"
-  secondApp: {}
 `
 		contentsMap := map[string]map[string]string{
 			"firstApp": {
-				"firstSecret":  "1",
+				"firstSecret": "1",
+			},
+			"secondApp": {
 				"secondSecret": "2",
 			},
-			"secondApp": {},
 		}
 		f, err := ioutil.TempFile("", "")
 		So(err, ShouldBeNil)
@@ -85,10 +87,11 @@ func TestSecretFileConfig(t *testing.T) {
 
 				secrets := map[string]interface{}{
 					"firstApp": map[string]string{
-						"firstSecret":  "1",
+						"firstSecret": "1",
+					},
+					"secondApp": map[string]string{
 						"secondSecret": "2",
 					},
-					"secondApp": map[string]string{},
 				}
 				config := SecretFileConfig{filePath: newFile.Name()}
 				err = config.saveToDiskFromVault(&mockVault{secrets: secrets}, "")
@@ -105,11 +108,12 @@ func TestSecretFileConfig(t *testing.T) {
 				err = defaultConfig.writeToVault(vault, "")
 				So(err, ShouldBeNil)
 				So(vault.commands, ShouldHaveLength, 2)
+				fmt.Println("vault.commands", vault.commands)
 				So(vault.commands, ShouldContain,
-					[]string{"kv", "put", "firstApp", "firstSecret=1", "secondSecret=2"},
+					[]string{"kv", "put", "firstApp", "firstSecret=1"},
 				)
 				So(vault.commands, ShouldContain,
-					[]string{"kv", "put", "secondApp"},
+					[]string{"kv", "put", "secondApp", "secondSecret=2"},
 				)
 			})
 		})
