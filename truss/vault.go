@@ -3,7 +3,6 @@ package truss
 import (
 	"bytes"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -22,7 +21,7 @@ type VaultCmd interface {
 	Run(args []string) ([]byte, error)
 	Decrypt(transitKeyName string, encrypted []byte) ([]byte, error)
 	Encrypt(transitKeyName string, raw []byte) ([]byte, error)
-	GetToken() (string, error)
+	GetWrappingToken() (string, error)
 	GetMap(vaultPath string) (map[string]string, error)
 	ListPath(vaultPath string) ([]string, error)
 }
@@ -71,36 +70,17 @@ func (vault *VaultCmdImpl) ClosePortForward() error {
 
 // Run run command
 func (vault *VaultCmdImpl) Run(args []string) ([]byte, error) {
-	var port string
-	var err error
-
-	var data interface{}
-	if vault.auth != nil {
-		data, err = vault.auth.LoadCreds()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if vault.portForwarded != nil {
-		port = *vault.portForwarded
-	} else {
-		port, err = vault.PortForward()
-		if err != nil {
-			return nil, err
-		}
+	// if we didn't start the port forward, don't close it
+	if vault.portForwarded == nil {
 		defer vault.ClosePortForward()
 	}
 
-	var token string
-	if vault.auth != nil {
-		token, err = vault.auth.Login(data, port)
-		if err != nil {
-			return nil, err
-		}
+	token, err := vault.getToken()
+	if err != nil {
+		return nil, err
 	}
 
-	output, err := execVault(token, port, args...)
+	output, err := vault.execVault(token, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -108,17 +88,36 @@ func (vault *VaultCmdImpl) Run(args []string) ([]byte, error) {
 }
 
 // GetToken gets a Vault Token
-func (vault *VaultCmdImpl) GetToken() (string, error) {
-	out, err := vault.Run([]string{"write", "-wrap-ttl=3m", "-field=wrapping_token", "-force", "auth/token/create"})
+// Caller is responsible for closing port
+func (vault *VaultCmdImpl) getToken() (string, error) {
+	// out, err := vault.Run([]string{"write", "-wrap-ttl=3m", "-field=wrapping_token", "-force", "auth/token/create"})
+	data, err := vault.auth.LoadCreds()
+	if err != nil {
+		return "", err
+	}
 
-	return string(out), err
+	if vault.portForwarded == nil {
+		_, err = vault.PortForward()
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return vault.auth.Login(data, *vault.portForwarded)
 }
 
-func execVault(token string, port string, arg ...string) ([]byte, error) {
+// GetWrappingToken gets a Vault wrapping token
+// Caller is responsible for closing port
+func (vault *VaultCmdImpl) GetWrappingToken() (string, error) {
+	token, err := vault.Run([]string{"write", "-wrap-ttl=3m", "-field=wrapping_token", "-force", "auth/token/create"})
+	return string(token), err
+}
+
+func (vault *VaultCmdImpl) execVault(token string, arg ...string) ([]byte, error) {
 	cmd := exec.Command("vault", arg...)
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env,
-		"VAULT_ADDR=https://localhost:"+port,
+		"VAULT_ADDR=https://localhost:"+*vault.portForwarded,
 		"VAULT_SKIP_VERIFY=true",
 		"VAULT_TOKEN="+token,
 	)
