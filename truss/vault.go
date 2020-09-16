@@ -3,12 +3,14 @@ package truss
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
 
+	"github.com/hashicorp/vault/api"
 	"github.com/phayes/freeport"
 	"gopkg.in/yaml.v2"
 )
@@ -90,13 +92,15 @@ func (vault *VaultCmdImpl) Run(args []string) ([]byte, error) {
 		defer vault.ClosePortForward()
 	}
 
+	var token string
 	if vault.auth != nil {
-		if err := vault.auth.Login(data, port); err != nil {
+		token, err = vault.auth.Login(data, port)
+		if err != nil {
 			return nil, err
 		}
 	}
 
-	output, err := execVault(port, args...)
+	output, err := execVault(token, port, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -110,10 +114,14 @@ func (vault *VaultCmdImpl) GetToken() (string, error) {
 	return string(out), err
 }
 
-func execVault(port string, arg ...string) ([]byte, error) {
+func execVault(token string, port string, arg ...string) ([]byte, error) {
 	cmd := exec.Command("vault", arg...)
 	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, "VAULT_ADDR=https://localhost:"+port, "VAULT_SKIP_VERIFY=true")
+	cmd.Env = append(cmd.Env,
+		"VAULT_ADDR=https://localhost:"+port,
+		"VAULT_SKIP_VERIFY=true",
+		"VAULT_TOKEN="+token,
+	)
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("Vault command failed: %v", string(err.(*exec.ExitError).Stderr))
