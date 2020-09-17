@@ -10,8 +10,9 @@ require (
 	github.com/hashicorp/vault v1.2.1-0.20200916223652-9510adcb9ad1
 	github.com/hashicorp/vault-plugin-auth-gcp v0.7.1-0.20200824223748-9b39891cb353 // indirect
 	github.com/hashicorp/vault-plugin-auth-jwt v0.7.3 // indirect
+	github.com/hashicorp/vault-plugin-secrets-kv v0.5.6
 	github.com/hashicorp/vault/api v1.0.5-0.20200717191844-f687267c8086
-	github.com/hashicorp/vault/sdk v0.1.14-0.20200916223652-9510adcb9ad1 // indirect
+	github.com/hashicorp/vault/sdk v0.1.14-0.20200916223652-9510adcb9ad1
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/pkg/errors v0.9.1

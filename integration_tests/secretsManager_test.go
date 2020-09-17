@@ -81,7 +81,7 @@ secrets:
 			So(err, ShouldBeNil)
 			vaultData, err := vault.GetMap("secret/bridge/truss-cli-test/file/foo")
 			So(err, ShouldBeNil)
-			So(vaultData, ShouldResemble, map[string]interface{}{
+			So(vaultData, ShouldResemble, map[string]string{
 				"a": "b",
 			})
 

@@ -33,27 +33,10 @@ func TestVault(t *testing.T) {
 			})
 		})
 
-		Convey("Encrypt then Decrypt", func() {
-			transitKeyName := "test-transit-key"
-			input := "my-great-stuff"
-			encrypted, err := vault.Encrypt(transitKeyName, []byte(input))
-			So(err, ShouldBeNil)
-			So(encrypted, ShouldNotBeNil)
-			decrypted, err := vault.Decrypt(transitKeyName, encrypted)
-			So(err, ShouldBeNil)
-			So(string(decrypted), ShouldEqual, input)
-		})
-
 		Convey("Run", func() {
 			bytes, err := vault.Run([]string{"status"})
 			So(err, ShouldBeNil)
 			So(bytes, ShouldNotBeEmpty)
-		})
-
-		Convey("GetWrappingToken", func() {
-			token, err := vault.GetWrappingToken()
-			So(err, ShouldBeNil)
-			So(token, ShouldNotBeNil)
 		})
 	})
 }

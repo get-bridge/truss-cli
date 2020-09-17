@@ -151,7 +151,7 @@ func (m SecretsManager) kubeconfig(secret SecretConfig) (string, error) {
 }
 
 // Vault creates a proxied Vault client
-func (m SecretsManager) Vault(secret SecretConfig) (VaultCmd, error) {
+func (m SecretsManager) Vault(secret SecretConfig) (*VaultCmd, error) {
 	kubeconfig, err := m.kubeconfig(secret)
 	if err != nil {
 		return nil, err

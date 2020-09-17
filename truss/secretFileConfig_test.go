@@ -9,19 +9,24 @@ import (
 )
 
 func TestSecretFileConfig(t *testing.T) {
+	vault := createTestVault(t)
+
 	Convey("TestSecretConfig", t, func() {
+		transitKey := "file-test-transit"
 		fileContent := `secrets:
   firstApp:
     firstSecret: "1"
-  secondApp:
     secondSecret: "2"
+  secondApp:
+    thirdSecret: "3"
 `
 		contentsMap := map[string]map[string]string{
 			"firstApp": {
-				"firstSecret": "1",
+				"firstSecret":  "1",
+				"secondSecret": "2",
 			},
 			"secondApp": {
-				"secondSecret": "2",
+				"thirdSecret": "3",
 			},
 		}
 		f, err := ioutil.TempFile("", "")
@@ -31,9 +36,8 @@ func TestSecretFileConfig(t *testing.T) {
 			os.Remove(f.Name())
 		}()
 
-		vault := &mockVault{}
-		defaultConfig := SecretFileConfig{filePath: f.Name()}
-		err = encryptAndSaveToDisk(vault, "", f.Name(), []byte(fileContent))
+		defaultConfig := SecretFileConfig{filePath: f.Name(), vaultPath: "kv/file/config"}
+		err = encryptAndSaveToDisk(vault, transitKey, f.Name(), []byte(fileContent))
 		So(err, ShouldBeNil)
 
 		Convey("existsOnDisk", func() {
@@ -55,13 +59,13 @@ func TestSecretFileConfig(t *testing.T) {
 
 		Convey("getDecryptedFromDisk", func() {
 			Convey("returns contents", func() {
-				bytes, err := SecretFileConfig{}.getDecryptedFromDisk(vault, "")
+				bytes, err := SecretFileConfig{}.getDecryptedFromDisk(vault, transitKey)
 				So(err, ShouldBeNil)
 				So(string(bytes), ShouldEqual, "secrets: {}")
 			})
 
 			Convey("returns default if file doesn't exist", func() {
-				bytes, err := defaultConfig.getDecryptedFromDisk(vault, "")
+				bytes, err := defaultConfig.getDecryptedFromDisk(vault, transitKey)
 				So(err, ShouldBeNil)
 				So(string(bytes), ShouldEqual, fileContent)
 			})
@@ -69,7 +73,7 @@ func TestSecretFileConfig(t *testing.T) {
 
 		Convey("getMapFromDisk", func() {
 			Convey("returns map of secrets", func() {
-				m, err := defaultConfig.getMapFromDisk(vault, "")
+				m, err := defaultConfig.getMapFromDisk(vault, transitKey)
 				So(err, ShouldBeNil)
 				So(m, ShouldResemble, contentsMap)
 			})
@@ -84,35 +88,44 @@ func TestSecretFileConfig(t *testing.T) {
 					os.Remove(f.Name())
 				}()
 
-				secrets := map[string]interface{}{
-					"firstApp": map[string]string{
-						"firstSecret": "1",
-					},
-					"secondApp": map[string]string{
-						"secondSecret": "2",
-					},
-				}
-				config := SecretFileConfig{filePath: newFile.Name()}
-				err = config.saveToDiskFromVault(&mockVault{secrets: secrets}, "")
+				_, err = vault.Write(kv2DataPath(defaultConfig.vaultPath)+"/firstApp", map[string]interface{}{
+					"data": contentsMap["firstApp"],
+				})
+				So(err, ShouldBeNil)
+				_, err = vault.Write(kv2DataPath(defaultConfig.vaultPath)+"/secondApp", map[string]interface{}{
+					"data": contentsMap["secondApp"],
+				})
+				So(err, ShouldBeNil)
+
+				config := SecretFileConfig{filePath: newFile.Name(), vaultPath: defaultConfig.vaultPath}
+				err = config.saveToDiskFromVault(vault, transitKey)
 				So(err, ShouldBeNil)
 
 				bytes, err := ioutil.ReadFile(newFile.Name())
 				So(err, ShouldBeNil)
-				So(string(bytes), ShouldEqual, fileContent+"-encrypted")
+
+				decrypted, err := vault.Decrypt(transitKey, bytes)
+				So(err, ShouldBeNil)
+				So(string(decrypted), ShouldEqual, fileContent)
 			})
 		})
 
 		Convey("writeToVault", func() {
 			Convey("writes to vault", func() {
-				err = defaultConfig.writeToVault(vault, "")
+				err = defaultConfig.writeToVault(vault, transitKey)
 				So(err, ShouldBeNil)
-				So(vault.commands, ShouldHaveLength, 2)
-				So(vault.commands, ShouldContain,
-					[]string{"kv", "put", "firstApp", "firstSecret=1"},
-				)
-				So(vault.commands, ShouldContain,
-					[]string{"kv", "put", "secondApp", "secondSecret=2"},
-				)
+
+				data, err := vault.GetMap(kv2DataPath(defaultConfig.vaultPath) + "/firstApp")
+				So(err, ShouldBeNil)
+				So(data, ShouldResemble, map[string]interface{}{
+					"firstSecret":  "1",
+					"secondSecret": "2",
+				})
+				data, err = vault.GetMap(kv2DataPath(defaultConfig.vaultPath) + "/secondApp")
+				So(err, ShouldBeNil)
+				So(data, ShouldResemble, map[string]interface{}{
+					"thirdSecret": "3",
+				})
 			})
 		})
 
@@ -125,12 +138,15 @@ func TestSecretFileConfig(t *testing.T) {
 					os.Remove(f.Name())
 				}()
 
-				err = SecretFileConfig{filePath: newFile.Name()}.saveToDisk(vault, "", []byte(fileContent))
+				err = SecretFileConfig{filePath: newFile.Name()}.saveToDisk(vault, transitKey, []byte(fileContent))
 				So(err, ShouldBeNil)
 
 				bytes, err := ioutil.ReadFile(newFile.Name())
 				So(err, ShouldBeNil)
-				So(string(bytes), ShouldEqual, fileContent+"-encrypted")
+
+				decrypted, err := vault.Decrypt(transitKey, bytes)
+				So(err, ShouldBeNil)
+				So(string(decrypted), ShouldEqual, fileContent)
 			})
 		})
 	})

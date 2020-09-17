@@ -15,7 +15,7 @@ var getGlobalConfigS3Cmd = &cobra.Command{
 	Long: `
 Fetches .truss.yaml from S3 and puts it in your home directory:
 
-	$ truss get-global-config s3 -b truss-cli-global-confi -k .truss.yaml
+	$ truss get-global-config s3 -b truss-cli-global-config -k .truss.yaml
 
 Uses S3 under the hood so it only works if you have AWS credentials set in your shell. Use the --role flag if you need to specify an AWS role ARN:
 

@@ -38,14 +38,14 @@ func (auth *vaultAuthAWS) LoadCreds() (interface{}, error) {
 }
 
 // Login for VaultAuth interface
-func (auth *vaultAuthAWS) Login(data interface{}, port string) (string, error) {
+func (auth *vaultAuthAWS) Login(data interface{}, addr string) (string, error) {
 	loginData, ok := data.(map[string]interface{})
 	if !ok {
 		return "", errors.New("aws login needs creds")
 	}
 
 	// create a vault client
-	client, err := newVaultClient(port)
+	client, err := newVaultClient(addr)
 	if err != nil {
 		return "", err
 	}
