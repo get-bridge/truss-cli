@@ -54,16 +54,20 @@ func (vault *VaultCmd) newVaultClientWithToken() (*api.Client, error) {
 		return nil, err
 	}
 
-	addr := vault.addr
-	if addr == "" {
-		addr = "https://localhost:" + *vault.portForwarded
-	}
-	client, err := newVaultClient(addr)
+	client, err := newVaultClient(vault.vaultAddr())
 	if err != nil {
 		return nil, err
 	}
 	client.SetToken(token)
 	return client, nil
+}
+
+func (vault *VaultCmd) vaultAddr() string {
+	addr := vault.addr
+	if addr == "" {
+		addr = "https://localhost:" + *vault.portForwarded
+	}
+	return addr
 }
 
 // PortForward instantiates a port-forward for Vault
@@ -135,11 +139,7 @@ func (vault *VaultCmd) getToken() (string, error) {
 		}
 	}
 
-	addr := vault.addr
-	if addr == "" {
-		addr = "https://localhost:" + *vault.portForwarded
-	}
-	return vault.auth.Login(data, addr)
+	return vault.auth.Login(data, vault.vaultAddr())
 }
 
 // GetWrappingToken gets a Vault wrapping token
@@ -166,7 +166,7 @@ func (vault *VaultCmd) execVault(token string, arg ...string) ([]byte, error) {
 	cmd := exec.Command("vault", arg...)
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env,
-		"VAULT_ADDR="+vault.addr,
+		"VAULT_ADDR="+vault.vaultAddr(),
 		"VAULT_SKIP_VERIFY=true",
 		"VAULT_TOKEN="+token,
 	)
