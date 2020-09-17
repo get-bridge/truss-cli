@@ -1,13 +1,9 @@
 package truss
 
 import (
-	"net"
 	"strings"
-	"testing"
 
 	"github.com/hashicorp/vault/api"
-	"github.com/hashicorp/vault/http"
-	"github.com/hashicorp/vault/vault"
 )
 
 type mockVault struct {
@@ -38,7 +34,7 @@ func (*mockVault) Encrypt(transitKeyName string, raw []byte) ([]byte, error) {
 	return append(raw, []byte("-encrypted")...), nil
 }
 
-func (*mockVault) GetToken() (string, error) {
+func (*mockVault) GetWrappingToken() (string, error) {
 	return "", nil
 }
 
