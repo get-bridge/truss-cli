@@ -1,6 +1,14 @@
 package truss
 
-import "strings"
+import (
+	"net"
+	"strings"
+	"testing"
+
+	"github.com/hashicorp/vault/api"
+	"github.com/hashicorp/vault/http"
+	"github.com/hashicorp/vault/vault"
+)
 
 type mockVault struct {
 	// mock saved vault commands
@@ -44,4 +52,8 @@ func (m *mockVault) ListPath(vaultPath string) ([]string, error) {
 		keys = append(keys, k)
 	}
 	return keys, nil
+}
+
+func (m *mockVault) Write(path string, data map[string]interface{}) (*api.Secret, error) {
+	return nil, nil
 }

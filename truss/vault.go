@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/vault/api"
 	"github.com/phayes/freeport"
@@ -24,6 +25,7 @@ type VaultCmd interface {
 	GetWrappingToken() (string, error)
 	GetMap(vaultPath string) (map[string]string, error)
 	ListPath(vaultPath string) ([]string, error)
+	Write(path string, data map[string]interface{}) (*api.Secret, error)
 }
 
 // VaultCmdImpl wrapper implementation for hashicorp vault
@@ -43,6 +45,12 @@ func Vault(kubeconfig string, auth VaultAuth) VaultCmd {
 	}
 }
 
+func newVaultClient(port string) (*api.Client, error) {
+	config := api.Config{Address: "https://localhost:" + port}
+	config.ConfigureTLS(&api.TLSConfig{Insecure: true})
+	return api.NewClient(&config)
+}
+
 // PortForward instantiates a port-forward for Vault
 func (vault *VaultCmdImpl) PortForward() (string, error) {
 	if vault.portForwarded != nil {
@@ -54,9 +62,13 @@ func (vault *VaultCmdImpl) PortForward() (string, error) {
 		return "", err
 	}
 	port := strconv.Itoa(p)
-	vault.portForwarded = &port
 
-	return port, vault.kubectl.PortForward("8200", port, "vault", "service/vault", vault.timeoutSeconds)
+	if err := vault.kubectl.PortForward("8200", port, "vault", "service/vault", vault.timeoutSeconds); err != nil {
+		return "", err
+	}
+
+	vault.portForwarded = &port
+	return port, nil
 }
 
 // ClosePortForward closes the port forward, if any
@@ -90,7 +102,6 @@ func (vault *VaultCmdImpl) Run(args []string) ([]byte, error) {
 // GetToken gets a Vault Token
 // Caller is responsible for closing port
 func (vault *VaultCmdImpl) getToken() (string, error) {
-	// out, err := vault.Run([]string{"write", "-wrap-ttl=3m", "-field=wrapping_token", "-force", "auth/token/create"})
 	data, err := vault.auth.LoadCreds()
 	if err != nil {
 		return "", err
@@ -123,72 +134,105 @@ func (vault *VaultCmdImpl) execVault(token string, arg ...string) ([]byte, error
 	)
 	output, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("Vault command failed: %v", string(err.(*exec.ExitError).Stderr))
+		return nil, fmt.Errorf("Vault command [%v] failed: %v", arg, string(err.(*exec.ExitError).Stderr))
 	}
 
 	return output, nil
 }
 
-// Encrypt shit
+// Write to vault
+func (vault *VaultCmdImpl) Write(path string, data map[string]interface{}) (*api.Secret, error) {
+	// if we didn't start the port forward, don't close it
+	if vault.portForwarded == nil {
+		defer vault.ClosePortForward()
+	}
+
+	token, err := vault.getToken()
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := newVaultClient(*vault.portForwarded)
+	client.SetToken(token)
+	return client.Logical().Write(path, data)
+}
+
+// Encrypt bytes using transit key
 func (vault *VaultCmdImpl) Encrypt(transitKeyName string, raw []byte) ([]byte, error) {
 	if transitKeyName == "" {
 		return nil, errors.New(("Must provide transitkey to encrypt"))
 	}
-	out, err := vault.Run([]string{
-		"write",
-		"-field=ciphertext",
-		"transit/encrypt/" + transitKeyName,
-		"plaintext=" + base64.StdEncoding.EncodeToString(raw),
+	out, err := vault.Write("/transit/encrypt/"+transitKeyName, map[string]interface{}{
+		"plaintext": base64.StdEncoding.EncodeToString(raw),
 	})
-
 	if err != nil {
 		return nil, err
 	}
-
-	return out, nil
+	ciphertext, ok := out.Data["ciphertext"].(string)
+	if !ok {
+		return nil, errors.New("There was an error encyrpting your data")
+	}
+	return []byte(ciphertext), nil
 }
 
-// Decrypt shit
+// Decrypt bytes using transit key
 func (vault *VaultCmdImpl) Decrypt(transitKeyName string, encrypted []byte) ([]byte, error) {
 	if transitKeyName == "" {
 		return nil, errors.New(("Must provide transitkey to decrypt"))
 	}
-	out, err := vault.Run([]string{
-		"write",
-		"-field=plaintext",
-		"transit/decrypt/" + transitKeyName,
-		"ciphertext=" + string(encrypted),
+	out, err := vault.Write("/transit/decrypt/"+transitKeyName, map[string]interface{}{
+		"ciphertext": string(encrypted),
 	})
-
 	if err != nil {
 		return nil, err
 	}
 
-	return base64.StdEncoding.DecodeString(string(out))
+	plaintext, ok := out.Data["plaintext"].(string)
+	if !ok {
+		return nil, errors.New("There was an error encyrpting your data")
+	}
+
+	return base64.StdEncoding.DecodeString(plaintext)
 }
 
 // GetMap returns a vaultPath as a map
 func (vault *VaultCmdImpl) GetMap(vaultPath string) (map[string]string, error) {
-	get, err := vault.Run([]string{
-		"kv",
-		"get",
-		"-format=yaml",
-		vaultPath,
-	})
+	// if we didn't start the port forward, don't close it
+	if vault.portForwarded == nil {
+		defer vault.ClosePortForward()
+	}
+
+	token, err := vault.getToken()
 	if err != nil {
 		return nil, err
 	}
 
-	getData := struct {
-		Data struct {
-			Data map[string]string `yaml:"data"`
-		} `yaml:"data"`
-	}{}
-	if err := yaml.NewDecoder(bytes.NewReader(get)).Decode(&getData); err != nil {
+	client, err := newVaultClient(*vault.portForwarded)
+	client.SetToken(token)
+	// TODO SO GROSS
+	if !strings.Contains(vaultPath, "secret/data") {
+		vaultPath = strings.Replace(vaultPath, "secret/", "secret/data/", 1)
+	}
+	out, err := client.Logical().Read(vaultPath)
+	if err != nil {
 		return nil, err
 	}
 
-	return getData.Data.Data, nil
+	data, ok := out.Data["data"].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("failed to parse path [%v] data: %v", vaultPath, out.Data)
+	}
+
+	secretStringMap := map[string]string{}
+	for k, v := range data {
+		vString, ok := v.(string)
+		if !ok {
+			return nil, fmt.Errorf("failed to parse path [%v] data: %v", vaultPath, out.Data)
+		}
+		secretStringMap[k] = vString
+	}
+
+	return secretStringMap, nil
 }
 
 // ListPath returns a vaultPath as a map

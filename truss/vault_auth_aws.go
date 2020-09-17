@@ -5,7 +5,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/hashicorp/vault/api"
 	awsauth "github.com/hashicorp/vault/builtin/credential/aws"
 )
 
@@ -46,14 +45,12 @@ func (auth *vaultAuthAWS) Login(data interface{}, port string) (string, error) {
 	}
 
 	// create a vault client
-	loginData["role"] = auth.vaultRole
-	config := api.Config{Address: "https://localhost:" + port}
-	config.ConfigureTLS(&api.TLSConfig{Insecure: true})
-	client, err := api.NewClient(&config)
+	client, err := newVaultClient(port)
 	if err != nil {
 		return "", err
 	}
 
+	loginData["role"] = auth.vaultRole
 	secret, err := client.Logical().Write("auth/aws/login", loginData)
 	if err != nil {
 		return "", err

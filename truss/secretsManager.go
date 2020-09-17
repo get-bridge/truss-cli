@@ -36,7 +36,7 @@ func NewSecretsManager(secretsFile string, editor string, vaultAuth VaultAuth) (
 // Returns true if $EDITOR wrote to the temp file
 func (m SecretsManager) Edit(secret SecretConfig) (bool, error) {
 	// start port-forward
-	vault, err := m.vault(secret)
+	vault, err := m.Vault(secret)
 	if err != nil {
 		return false, err
 	}
@@ -99,7 +99,7 @@ func (m SecretsManager) PushAll() error {
 
 // Push pushes secrets to Vaut
 func (m SecretsManager) Push(secret SecretConfig) error {
-	vault, err := m.vault(secret)
+	vault, err := m.Vault(secret)
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func (m SecretsManager) PullAll() error {
 
 // Pull updates the file on disk with the vaules from Vault (destructive)
 func (m SecretsManager) Pull(secret SecretConfig) error {
-	vault, err := m.vault(secret)
+	vault, err := m.Vault(secret)
 	if err != nil {
 		return err
 	}
@@ -150,8 +150,8 @@ func (m SecretsManager) kubeconfig(secret SecretConfig) (string, error) {
 	return path.Join(directory, secret.Kubeconfig()), nil
 }
 
-// vault creates a proxied Vault client
-func (m SecretsManager) vault(secret SecretConfig) (VaultCmd, error) {
+// Vault creates a proxied Vault client
+func (m SecretsManager) Vault(secret SecretConfig) (VaultCmd, error) {
 	kubeconfig, err := m.kubeconfig(secret)
 	if err != nil {
 		return nil, err
@@ -166,7 +166,7 @@ func (m SecretsManager) View(secret SecretConfig) (string, error) {
 		return "", errors.New("no such local secrets file exists. try running truss secrets pull")
 	}
 
-	vault, err := m.vault(secret)
+	vault, err := m.Vault(secret)
 	if err != nil {
 		return "", err
 	}
@@ -181,7 +181,7 @@ func (m SecretsManager) View(secret SecretConfig) (string, error) {
 
 // EncryptSecret on disk with cypher text from vault
 func (m SecretsManager) EncryptSecret(secret SecretConfig) error {
-	vault, err := m.vault(secret)
+	vault, err := m.Vault(secret)
 	if err != nil {
 		return err
 	}
