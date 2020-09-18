@@ -140,6 +140,11 @@ func TestSecretFileConfig(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 
+			Convey("errors if not valid yaml", func() {
+				err = defaultConfig.saveToDisk(vault, transitKey, []byte(`{"asdf": {}}`))
+				So(err, ShouldEqual, ErrSecretFileConfigInvalidYaml)
+			})
+
 			Convey("writes to disk", func() {
 				newFile, err := ioutil.TempFile("", "")
 				So(err, ShouldBeNil)

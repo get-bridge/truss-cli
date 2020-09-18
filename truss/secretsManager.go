@@ -91,9 +91,9 @@ func (m SecretsManager) Edit(secret SecretConfig) (bool, error) {
 	if err != nil {
 		return true, err
 	}
-	secret.saveToDisk(vault, m.TransitKeyName, raw)
+	err = secret.saveToDisk(vault, m.TransitKeyName, raw)
 
-	return true, nil
+	return true, err
 }
 
 // PushAll pushes all secrets for all environments
