@@ -83,10 +83,7 @@ func TestSecretFileConfig(t *testing.T) {
 			Convey("writes encrypted secrets", func() {
 				newFile, err := ioutil.TempFile("", "")
 				So(err, ShouldBeNil)
-				defer func() {
-					f.Close()
-					os.Remove(f.Name())
-				}()
+				defer os.Remove(newFile.Name())
 
 				_, err = vault.Write(kv2DataPath(defaultConfig.vaultPath)+"/firstApp", map[string]interface{}{
 					"data": contentsMap["firstApp"],
@@ -130,13 +127,22 @@ func TestSecretFileConfig(t *testing.T) {
 		})
 
 		Convey("saveToDisk", func() {
+			Convey("creates dir if doesn't exist", func() {
+				dir, err := ioutil.TempDir("", "")
+				So(err, ShouldBeNil)
+				defer os.RemoveAll(dir)
+
+				fileName := dir + "/foo/bar/secret"
+				err = SecretFileConfig{filePath: fileName}.saveToDisk(vault, transitKey, []byte(fileContent))
+				So(err, ShouldBeNil)
+
+				os.Stat(dir)
+			})
+
 			Convey("writes to disk", func() {
 				newFile, err := ioutil.TempFile("", "")
 				So(err, ShouldBeNil)
-				defer func() {
-					f.Close()
-					os.Remove(f.Name())
-				}()
+				defer os.Remove(newFile.Name())
 
 				err = SecretFileConfig{filePath: newFile.Name()}.saveToDisk(vault, transitKey, []byte(fileContent))
 				So(err, ShouldBeNil)

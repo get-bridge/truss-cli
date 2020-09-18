@@ -15,7 +15,7 @@ func TestSecretDirConfig(t *testing.T) {
 
 	Convey("TestSecretConfig", t, func() {
 		dir, err := ioutil.TempDir("", "")
-		defer os.Remove(dir)
+		defer os.RemoveAll(dir)
 		So(err, ShouldBeNil)
 		So(dir, ShouldNotBeEmpty)
 
@@ -75,7 +75,7 @@ func TestSecretDirConfig(t *testing.T) {
 		Convey("saveToDiskFromVault", func() {
 			Convey("writes encrypted secrets", func() {
 				newDir, err := ioutil.TempDir("", "")
-				defer os.Remove(dir)
+				defer os.RemoveAll(newDir)
 				So(err, ShouldBeNil)
 				So(dir, ShouldNotBeEmpty)
 
@@ -112,7 +112,7 @@ func TestSecretDirConfig(t *testing.T) {
 		Convey("saveToDisk", func() {
 			Convey("writes to disk", func() {
 				newDir, err := ioutil.TempDir("", "")
-				defer os.Remove(dir)
+				defer os.RemoveAll(newDir)
 				So(err, ShouldBeNil)
 				So(dir, ShouldNotBeEmpty)
 

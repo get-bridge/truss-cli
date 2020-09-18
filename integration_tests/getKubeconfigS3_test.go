@@ -25,7 +25,7 @@ func TestGetKubeconfigS3(t *testing.T) {
 		}
 		tmp, err := ioutil.TempDir("", "")
 		So(err, ShouldBeNil)
-		defer os.Remove(tmp)
+		defer os.RemoveAll(tmp)
 
 		cmd := truss.GetKubeconfigS3(awsrole, bucket, tmp, region)
 
