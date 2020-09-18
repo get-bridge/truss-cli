@@ -136,7 +136,8 @@ func TestSecretFileConfig(t *testing.T) {
 				err = SecretFileConfig{filePath: fileName}.saveToDisk(vault, transitKey, []byte(fileContent))
 				So(err, ShouldBeNil)
 
-				os.Stat(dir)
+				_, err = os.Stat(dir)
+				So(err, ShouldBeNil)
 			})
 
 			Convey("writes to disk", func() {
