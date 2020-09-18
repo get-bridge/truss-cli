@@ -22,6 +22,8 @@ secrets:
   kubeconfig: kube-config-name-2
 `
 		tmp := os.TempDir()
+		defer os.RemoveAll(tmp)
+
 		secretsPath := tmp + "/secrets.yaml"
 		err := ioutil.WriteFile(secretsPath, []byte(secretsContent), 0644)
 		So(err, ShouldBeNil)

@@ -64,10 +64,6 @@ func (s SecretFileConfig) existsOnDisk() bool {
 
 // getDecryptedFromDisk returns the decrypted yaml from disk
 func (s SecretFileConfig) getDecryptedFromDisk(vault *VaultCmd, transitKeyName string) ([]byte, error) {
-	if !s.existsOnDisk() {
-		return []byte("secrets: {}"), nil
-	}
-
 	encrypted, err := ioutil.ReadFile(s.filePath)
 	if err != nil {
 		return nil, err

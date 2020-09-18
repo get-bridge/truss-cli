@@ -45,11 +45,20 @@ func (m SecretsManager) Edit(secret SecretConfig) (bool, error) {
 	}
 	defer vault.ClosePortForward()
 
-	// load existing disk value
-	// decrypt it or provide default
-	raw, err := secret.getDecryptedFromDisk(vault, m.TransitKeyName)
-	if err != nil {
-		return false, err
+	var raw []byte
+	if !secret.existsOnDisk() {
+		// test that we can encrypt
+		_, err = vault.Encrypt(m.TransitKeyName, []byte{})
+		if err != nil {
+			return false, err
+		}
+		raw = []byte("secrets: {}")
+	} else {
+		// load existing disk value
+		raw, err = secret.getDecryptedFromDisk(vault, m.TransitKeyName)
+		if err != nil {
+			return false, err
+		}
 	}
 
 	// save to tmp file
