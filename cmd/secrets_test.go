@@ -37,7 +37,7 @@ secrets:
 		Convey("find secret in current directory", func() {
 			dir, err := ioutil.TempDir("", "")
 			So(err, ShouldBeNil)
-			defer os.Remove(dir)
+			defer os.RemoveAll(dir)
 
 			err = ioutil.WriteFile(path.Join(dir, defaultSecretsFileName), []byte(secretsFileContent), 0644)
 			So(err, ShouldBeNil)
@@ -52,7 +52,7 @@ secrets:
 		Convey("find secret in parent directory", func() {
 			dir, err := ioutil.TempDir("", "")
 			So(err, ShouldBeNil)
-			defer os.Remove(dir)
+			defer os.RemoveAll(dir)
 
 			err = ioutil.WriteFile(path.Join(dir, defaultSecretsFileName), []byte(secretsFileContent), 0644)
 			So(err, ShouldBeNil)

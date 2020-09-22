@@ -2,6 +2,7 @@ package truss
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -9,6 +10,9 @@ import (
 
 	"gopkg.in/yaml.v2"
 )
+
+// ErrSecretFileConfigInvalidYaml error if invalid yaml
+var ErrSecretFileConfigInvalidYaml = errors.New("Unable to parse secret as yaml or missing required root element `secrets`")
 
 func init() {
 	secretConfigFactories["file"] = parseSecretFileConfig
@@ -64,10 +68,6 @@ func (s SecretFileConfig) existsOnDisk() bool {
 
 // getDecryptedFromDisk returns the decrypted yaml from disk
 func (s SecretFileConfig) getDecryptedFromDisk(vault *VaultCmd, transitKeyName string) ([]byte, error) {
-	if !s.existsOnDisk() {
-		return []byte("secrets: {}"), nil
-	}
-
 	encrypted, err := ioutil.ReadFile(s.filePath)
 	if err != nil {
 		return nil, err
@@ -88,14 +88,7 @@ func (s SecretFileConfig) getMapFromDisk(vault *VaultCmd, transitKeyName string)
 		return nil, err
 	}
 
-	p := struct {
-		Secrets map[string]map[string]string `yaml:"secrets"`
-	}{}
-	if err := yaml.NewDecoder(bytes.NewReader(raw)).Decode(&p); err != nil {
-		return nil, err
-	}
-
-	return p.Secrets, nil
+	return parseSecretFileYaml(raw)
 }
 
 // saveToDiskFromVault writes encrypted secrets to disk from vault
@@ -158,5 +151,22 @@ func (s SecretFileConfig) writeToVault(vault *VaultCmd, transitKeyName string) e
 }
 
 func (s SecretFileConfig) saveToDisk(vault *VaultCmd, transitKeyName string, raw []byte) error {
+	// validate valid yaml
+	if _, err := parseSecretFileYaml(raw); err != nil {
+		return err
+	}
+
 	return encryptAndSaveToDisk(vault, transitKeyName, s.filePath, raw)
+}
+
+func parseSecretFileYaml(raw []byte) (map[string]map[string]string, error) {
+	p := struct {
+		Secrets map[string]map[string]string `yaml:"secrets"`
+	}{}
+	decoder := yaml.NewDecoder(bytes.NewReader(raw))
+	decoder.SetStrict(true)
+	if err := decoder.Decode(&p); err != nil {
+		return nil, ErrSecretFileConfigInvalidYaml
+	}
+	return p.Secrets, nil
 }
