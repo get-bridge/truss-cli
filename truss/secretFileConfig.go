@@ -2,6 +2,7 @@ package truss
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -9,6 +10,9 @@ import (
 
 	"gopkg.in/yaml.v2"
 )
+
+// ErrSecretFileConfigInvalidYaml error if invalid yaml
+var ErrSecretFileConfigInvalidYaml = errors.New("Unable to parse secret as yaml or missing required root element `secrets`")
 
 func init() {
 	secretConfigFactories["file"] = parseSecretFileConfig
@@ -63,11 +67,7 @@ func (s SecretFileConfig) existsOnDisk() bool {
 }
 
 // getDecryptedFromDisk returns the decrypted yaml from disk
-func (s SecretFileConfig) getDecryptedFromDisk(vault VaultCmd, transitKeyName string) ([]byte, error) {
-	if !s.existsOnDisk() {
-		return []byte("secrets: {}"), nil
-	}
-
+func (s SecretFileConfig) getDecryptedFromDisk(vault *VaultCmd, transitKeyName string) ([]byte, error) {
 	encrypted, err := ioutil.ReadFile(s.filePath)
 	if err != nil {
 		return nil, err
@@ -82,36 +82,40 @@ func (s SecretFileConfig) getDecryptedFromDisk(vault VaultCmd, transitKeyName st
 	return decrypted, nil
 }
 
-func (s SecretFileConfig) getMapFromDisk(vault VaultCmd, transitKeyName string) (map[string]map[string]string, error) {
+func (s SecretFileConfig) getMapFromDisk(vault *VaultCmd, transitKeyName string) (map[string]map[string]string, error) {
 	raw, err := s.getDecryptedFromDisk(vault, transitKeyName)
 	if err != nil {
 		return nil, err
 	}
 
-	p := struct {
-		Secrets map[string]map[string]string `yaml:"secrets"`
-	}{}
-	if err := yaml.NewDecoder(bytes.NewReader(raw)).Decode(&p); err != nil {
-		return nil, err
-	}
-
-	return p.Secrets, nil
+	return parseSecretFileYaml(raw)
 }
 
 // saveToDiskFromVault writes encrypted secrets to disk from vault
-func (s SecretFileConfig) saveToDiskFromVault(vault VaultCmd, transitKeyName string) error {
-	secretNames, err := vault.ListPath(s.vaultPath)
+func (s SecretFileConfig) saveToDiskFromVault(vault *VaultCmd, transitKeyName string) error {
+	secretNames, err := vault.ListPath(kv2MetadataPath(s.vaultPath))
 	if err != nil {
 		return err
 	}
 
 	secrets := map[string]map[string]string{}
 	for _, name := range secretNames {
-		secret, err := vault.GetMap(path.Join(s.vaultPath, name))
+		vaultPath := kv2DataPath(path.Join(s.vaultPath, name))
+		secret, err := vault.GetMap(vaultPath)
 		if err != nil {
 			return err
 		}
-		secrets[name] = secret
+
+		secretStringMap := map[string]string{}
+		for k, v := range secret {
+			vString, ok := v.(string)
+			if !ok {
+				return fmt.Errorf("failed to parse secret: %v", secret)
+			}
+			secretStringMap[k] = vString
+		}
+
+		secrets[name] = secretStringMap
 	}
 
 	out := map[string]map[string]map[string]string{
@@ -127,19 +131,17 @@ func (s SecretFileConfig) saveToDiskFromVault(vault VaultCmd, transitKeyName str
 }
 
 // writeToVault writes a secret to Vault
-func (s SecretFileConfig) writeToVault(vault VaultCmd, transitKeyName string) error {
+func (s SecretFileConfig) writeToVault(vault *VaultCmd, transitKeyName string) error {
 	secrets, err := s.getMapFromDisk(vault, transitKeyName)
 	if err != nil {
 		return err
 	}
 
 	for key, data := range secrets {
-		args := []string{"kv", "put", path.Join(s.vaultPath, key)}
-		for k, v := range data {
-			args = append(args, fmt.Sprintf("%s=%s", k, v))
-		}
-
-		_, err := vault.Run(args)
+		vaultPath := kv2DataPath(path.Join(s.vaultPath, key))
+		_, err := vault.Write(vaultPath, map[string]interface{}{
+			"data": data,
+		})
 		if err != nil {
 			return err
 		}
@@ -148,6 +150,23 @@ func (s SecretFileConfig) writeToVault(vault VaultCmd, transitKeyName string) er
 	return nil
 }
 
-func (s SecretFileConfig) saveToDisk(vault VaultCmd, transitKeyName string, raw []byte) error {
+func (s SecretFileConfig) saveToDisk(vault *VaultCmd, transitKeyName string, raw []byte) error {
+	// validate valid yaml
+	if _, err := parseSecretFileYaml(raw); err != nil {
+		return err
+	}
+
 	return encryptAndSaveToDisk(vault, transitKeyName, s.filePath, raw)
+}
+
+func parseSecretFileYaml(raw []byte) (map[string]map[string]string, error) {
+	p := struct {
+		Secrets map[string]map[string]string `yaml:"secrets"`
+	}{}
+	decoder := yaml.NewDecoder(bytes.NewReader(raw))
+	decoder.SetStrict(true)
+	if err := decoder.Decode(&p); err != nil {
+		return nil, ErrSecretFileConfigInvalidYaml
+	}
+	return p.Secrets, nil
 }
