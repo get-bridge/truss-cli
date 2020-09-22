@@ -32,6 +32,10 @@ func (kubectl *KubectlCmd) PortForward(port, listen, namespace, target string, t
 	kubectl.portForwardCmd = exec.Command("kubectl", argsWithCmd...)
 
 	if kubectl.kubeconfig != "" {
+		_, err := os.Stat(kubectl.kubeconfig)
+		if err != nil {
+			return err
+		}
 		kubectl.portForwardCmd.Env = append(os.Environ(), "KUBECONFIG="+kubectl.kubeconfig)
 	}
 
@@ -39,9 +43,7 @@ func (kubectl *KubectlCmd) PortForward(port, listen, namespace, target string, t
 		return fmt.Errorf("Failed to port forward: %v", string(err.(*exec.ExitError).Stderr))
 	}
 
-	waitForPort(listen, timeoutSeconds)
-
-	return nil
+	return waitForPort(listen, timeoutSeconds)
 }
 
 // ClosePortForward sigterm kubectl port-forward
@@ -65,7 +67,7 @@ func (kubectl *KubectlCmd) Run(arg ...string) ([]byte, error) {
 	return bytes, nil
 }
 
-func waitForPort(port string, timeoutSeconds int) {
+func waitForPort(port string, timeoutSeconds int) error {
 	log.Debugln("Waiting for port", port)
 	for i := 0; i < timeoutSeconds; i++ {
 		conn, err := net.Dial("tcp", ":"+port)
@@ -73,10 +75,10 @@ func waitForPort(port string, timeoutSeconds int) {
 			defer conn.Close()
 		}
 		if err == nil {
-			return
+			return nil
 		}
 		time.Sleep(time.Second)
 	}
 
-	log.Warnln("Could not reach port", port)
+	return fmt.Errorf("Could not reach port: %v", port)
 }

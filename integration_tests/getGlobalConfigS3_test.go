@@ -28,6 +28,7 @@ func TestGetGlobalConfigS3(t *testing.T) {
 			key = ".truss.yaml"
 		}
 		tmp := os.TempDir()
+		defer os.RemoveAll(tmp)
 		input := &truss.GetGlobalConfigS3Input{
 			Bucket: bucket,
 			Region: region,

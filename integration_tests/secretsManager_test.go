@@ -12,8 +12,9 @@ import (
 )
 
 func TestSecretsManager(t *testing.T) {
-	FocusConvey("SecretsManager", t, func() {
+	Convey("SecretsManager", t, func() {
 		tmp := os.TempDir()
+		defer os.RemoveAll(tmp)
 
 		secretsFileName := path.Join(tmp, "secrets.file")
 		secretsFileContent := `secrets:
@@ -47,6 +48,8 @@ secrets:
 		firstSecret := sm.SecretConfigList.Secrets[0]
 		So(firstSecret, ShouldNotBeNil)
 
+		err = ioutil.WriteFile(secretsFileName, []byte(secretsFileContent), 0644)
+		So(err, ShouldBeNil)
 		sm.EncryptSecret(firstSecret)
 		So(err, ShouldBeNil)
 
@@ -75,10 +78,13 @@ secrets:
 			err := sm.Push(firstSecret)
 			So(err, ShouldBeNil)
 
-			vault := truss.Vault(firstSecret.Kubeconfig(), sm.VaultAuth)
-			vaultData, err := vault.Run([]string{"kv", "get", "-field=a", "secret/bridge/truss-cli-test/file/foo"})
+			vault, err := sm.Vault(firstSecret)
 			So(err, ShouldBeNil)
-			So(string(vaultData), ShouldEqual, "b")
+			vaultData, err := vault.GetMap("secret/data/bridge/truss-cli-test/file/foo")
+			So(err, ShouldBeNil)
+			So(vaultData, ShouldResemble, map[string]interface{}{
+				"a": "b",
+			})
 
 			err = sm.Pull(firstSecret)
 			So(err, ShouldBeNil)

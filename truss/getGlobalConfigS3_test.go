@@ -12,7 +12,7 @@ func TestGetGlobalConfigS3(t *testing.T) {
 	Convey("GetGlobalConfigS3", t, func() {
 		dir, err := ioutil.TempDir("", "")
 		So(err, ShouldBeNil)
-		defer os.Remove(dir)
+		defer os.RemoveAll(dir)
 
 		input := &GetGlobalConfigS3Input{
 			Dir: dir,

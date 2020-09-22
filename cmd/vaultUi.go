@@ -32,7 +32,7 @@ and open the UI in your browser.`,
 		}
 		defer vault.ClosePortForward()
 
-		token, err := vault.GetToken()
+		token, err := vault.GetWrappingToken()
 		if err != nil {
 			return err
 		}
