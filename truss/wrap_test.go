@@ -74,8 +74,11 @@ func TestWrap(t *testing.T) {
 				Stdin:       os.Stdin,
 			}
 			err := Wrap(input, "ls", "asdf")
-			So(err.Error(), ShouldEqual, "exit status 1")
-			So(errOut.String(), ShouldContainSubstring, "ls: asdf: No such file or directory")
+			So(err.Error(), ShouldContainSubstring, "exit status")
+			So(err.Error(), ShouldNotEqual, "exit status 0")
+			So(errOut.String(), ShouldContainSubstring, "ls")
+			So(errOut.String(), ShouldContainSubstring, "asdf")
+			So(errOut.String(), ShouldContainSubstring, "No such file or directory")
 		})
 	})
 }

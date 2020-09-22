@@ -18,8 +18,7 @@ As it will port-forward to the service and call aws auth`,
 			return err
 		}
 
-		kubectl := truss.Kubectl(kubeconfig)
-		output, err := truss.Vault(kubectl, getVaultAuth()).Run(args)
+		output, err := truss.Vault(kubeconfig, getVaultAuth()).Run(args)
 		if err != nil {
 			return err
 		}

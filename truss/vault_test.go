@@ -1,94 +1,58 @@
 package truss
 
 import (
-	"os"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestVault(t *testing.T) {
+	vault := createTestVault(t)
+
 	Convey("Vault", t, func() {
-		var auth VaultAuth
-		awsrole, ok := os.LookupEnv("TEST_AWS_ROLE")
-		if ok {
-			vaultrole := os.Getenv("TEST_VAULT_ROLE")
-			auth = VaultAuthAWS(vaultrole, awsrole)
+		fooSecretData := map[string]string{
+			"secret": "bar",
 		}
-		vault := VaultCmdImpl{
-			kubectl: Kubectl(""),
-			auth:    auth,
-		}
+		_, err := vault.Write("kv/data/foo", map[string]interface{}{
+			"data": fooSecretData,
+		})
+		So(err, ShouldBeNil)
 
-		Convey("PortForward", func() {
-			Convey("runs no errors", func() {
-				port, err := vault.PortForward()
+		Convey("GetWrappingToken", func() {
+			Convey("returns token", func() {
+				token, err := vault.GetWrappingToken()
 				So(err, ShouldBeNil)
-				So(port, ShouldNotBeEmpty)
-
-				port2, err := vault.PortForward()
-				So(err, ShouldBeNil)
-				So(port, ShouldEqual, port2)
-
-				err = vault.ClosePortForward()
-				So(err, ShouldBeNil)
-				So(vault.portForwarded, ShouldBeNil)
+				So(token, ShouldNotEqual, vault.token)
 			})
 		})
 
-		Convey("Run", func() {
-			Convey("runs no errors", func() {
-				_, err := vault.Run([]string{"status"})
-				So(err, ShouldBeNil)
-			})
-
-			Convey("forwards errors", func() {
-				_, err := vault.Run([]string{})
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldStartWith, "Vault command failed:")
-			})
-		})
-
-		Convey("Decrypt", func() {
-			Convey("errors if no transitKeyName provided", func() {
-				transitKeyName := ""
-				encrypted := []byte{}
-				_, err := vault.Decrypt(transitKeyName, encrypted)
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "Must provide transitkey to decrypt")
-			})
-		})
-
-		Convey("Encrypt", func() {
-			Convey("errors if no transitKeyName provided", func() {
-				transitKeyName := ""
-				raw := []byte{}
-				_, err := vault.Encrypt(transitKeyName, raw)
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "Must provide transitkey to encrypt")
-			})
-		})
-
-		Convey("Encrypt then Decrypt", func() {
-			transitKeyName := "test-transit-key"
-			input := "my-great-stuff"
-			encrypted, err := vault.Encrypt(transitKeyName, []byte(input))
+		Convey("Encrypt and Decrypt", func() {
+			toEncrypt := []byte("to-encrypt")
+			encrypted, err := vault.Encrypt("my-trans", toEncrypt)
 			So(err, ShouldBeNil)
-			So(encrypted, ShouldNotBeNil)
-			decrypted, err := vault.Decrypt(transitKeyName, encrypted)
+			So(encrypted, ShouldNotResemble, toEncrypt)
+
+			decrypted, err := vault.Decrypt("my-trans", encrypted)
 			So(err, ShouldBeNil)
-			So(string(decrypted), ShouldEqual, input)
+			So(decrypted, ShouldResemble, toEncrypt)
 		})
 
 		Convey("GetMap", func() {
-			vaultPath := "secret/bridge/truss-cli-test/getMap"
+			Convey("returns path as map of strings", func() {
+				list, err := vault.GetMap("kv/data/foo")
+				So(err, ShouldBeNil)
+				So(list, ShouldResemble, map[string]interface{}{
+					"secret": "bar",
+				})
+			})
+		})
 
-			_, err := vault.Run([]string{"kv", "put", vaultPath, "foo=bar"})
-			So(err, ShouldBeNil)
-
-			data, err := vault.GetMap(vaultPath)
-			So(err, ShouldBeNil)
-			So(data, ShouldResemble, map[string]string{"foo": "bar"})
+		Convey("List", func() {
+			Convey("returns keys as strings", func() {
+				list, err := vault.ListPath("kv/metadata")
+				So(err, ShouldBeNil)
+				So(list, ShouldResemble, []string{"foo"})
+			})
 		})
 	})
 }

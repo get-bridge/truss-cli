@@ -2,11 +2,10 @@ package truss
 
 import (
 	"errors"
-	"os"
-	"os/exec"
 
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
+	awsauth "github.com/hashicorp/vault/builtin/credential/aws"
 )
 
 type vaultAuthAWS struct {
@@ -22,25 +21,40 @@ func VaultAuthAWS(vaultRole, awsRole string) VaultAuth {
 	}
 }
 
-// Login for VaultAuth interface
-func (auth *vaultAuthAWS) Login(port string) error {
-	// assume aws role
-	sess := session.Must(session.NewSession())
-	creds, err := stscreds.NewCredentials(sess, auth.awsRole).Get()
+func (auth *vaultAuthAWS) LoadCreds() (interface{}, error) {
+	sess, err := session.NewSession()
 	if err != nil {
-		return err
+		return nil, err
+	}
+	creds := stscreds.NewCredentials(sess, auth.awsRole)
+
+	// check valid creds
+	_, err = creds.Get()
+	if err != nil {
+		return nil, err
 	}
 
-	cmd := exec.Command("vault", "login", "-method=aws", "role="+auth.vaultRole)
-	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, "VAULT_ADDR=https://localhost:"+port, "VAULT_SKIP_VERIFY=true")
-	cmd.Env = append(cmd.Env,
-		"AWS_SECRET_ACCESS_KEY="+creds.SecretAccessKey,
-		"AWS_ACCESS_KEY_ID="+creds.AccessKeyID,
-		"AWS_SESSION_TOKEN="+creds.SessionToken,
-	)
-	if _, err := cmd.Output(); err != nil {
-		return errors.New(string(err.(*exec.ExitError).Stderr))
+	return awsauth.GenerateLoginData(creds, "", "")
+}
+
+// Login for VaultAuth interface
+func (auth *vaultAuthAWS) Login(data interface{}, addr string) (string, error) {
+	loginData, ok := data.(map[string]interface{})
+	if !ok {
+		return "", errors.New("aws login needs creds")
 	}
-	return nil
+
+	// create a vault client
+	client, err := newVaultClient(addr)
+	if err != nil {
+		return "", err
+	}
+
+	loginData["role"] = auth.vaultRole
+	secret, err := client.Logical().Write("auth/aws/login", loginData)
+	if err != nil {
+		return "", err
+	}
+
+	return secret.Auth.ClientToken, nil
 }

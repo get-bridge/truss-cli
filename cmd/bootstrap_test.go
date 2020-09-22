@@ -6,7 +6,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestWrap(t *testing.T) {
+func TestBootstrap(t *testing.T) {
 	// Any tests we can get?
-	Convey("wrap", t, nil)
+	Convey("bootstrap", t, nil)
 }

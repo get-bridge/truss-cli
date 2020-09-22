@@ -36,7 +36,7 @@ func NewSecretsManager(secretsFile string, editor string, vaultAuth VaultAuth) (
 // Returns true if $EDITOR wrote to the temp file
 func (m SecretsManager) Edit(secret SecretConfig) (bool, error) {
 	// start port-forward
-	vault, err := m.vault(secret)
+	vault, err := m.Vault(secret)
 	if err != nil {
 		return false, err
 	}
@@ -45,11 +45,20 @@ func (m SecretsManager) Edit(secret SecretConfig) (bool, error) {
 	}
 	defer vault.ClosePortForward()
 
-	// load existing disk value
-	// decrypt it or provide default
-	raw, err := secret.getDecryptedFromDisk(vault, m.TransitKeyName)
-	if err != nil {
-		return false, err
+	var raw []byte
+	if !secret.existsOnDisk() {
+		// test that we can encrypt
+		_, err = vault.Encrypt(m.TransitKeyName, []byte{})
+		if err != nil {
+			return false, err
+		}
+		raw = []byte("secrets: {}")
+	} else {
+		// load existing disk value
+		raw, err = secret.getDecryptedFromDisk(vault, m.TransitKeyName)
+		if err != nil {
+			return false, err
+		}
 	}
 
 	// save to tmp file
@@ -82,9 +91,9 @@ func (m SecretsManager) Edit(secret SecretConfig) (bool, error) {
 	if err != nil {
 		return true, err
 	}
-	secret.saveToDisk(vault, m.TransitKeyName, raw)
+	err = secret.saveToDisk(vault, m.TransitKeyName, raw)
 
-	return true, nil
+	return true, err
 }
 
 // PushAll pushes all secrets for all environments
@@ -99,7 +108,7 @@ func (m SecretsManager) PushAll() error {
 
 // Push pushes secrets to Vaut
 func (m SecretsManager) Push(secret SecretConfig) error {
-	vault, err := m.vault(secret)
+	vault, err := m.Vault(secret)
 	if err != nil {
 		return err
 	}
@@ -123,7 +132,7 @@ func (m SecretsManager) PullAll() error {
 
 // Pull updates the file on disk with the vaules from Vault (destructive)
 func (m SecretsManager) Pull(secret SecretConfig) error {
-	vault, err := m.vault(secret)
+	vault, err := m.Vault(secret)
 	if err != nil {
 		return err
 	}
@@ -135,29 +144,29 @@ func (m SecretsManager) Pull(secret SecretConfig) error {
 	return secret.saveToDiskFromVault(vault, m.TransitKeyName)
 }
 
-// kubectl creates a Kubectl client
-func (m SecretsManager) kubectl(secret SecretConfig) (*KubectlCmd, error) {
+// get kubeconfig name
+func (m SecretsManager) kubeconfig(secret SecretConfig) (string, error) {
 	config := viper.GetStringMap("kubeconfigfiles")
 	directory, ok := config["directory"].(string)
 	if !ok {
 		home, err := homedir.Dir()
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 		directory = home + "/.kube/"
 	}
 
-	return Kubectl(path.Join(directory, secret.Kubeconfig())), nil
+	return path.Join(directory, secret.Kubeconfig()), nil
 }
 
-// vault creates a proxied Vault client
-func (m SecretsManager) vault(secret SecretConfig) (VaultCmd, error) {
-	kubectl, err := m.kubectl(secret)
+// Vault creates a proxied Vault client
+func (m SecretsManager) Vault(secret SecretConfig) (*VaultCmd, error) {
+	kubeconfig, err := m.kubeconfig(secret)
 	if err != nil {
 		return nil, err
 	}
 
-	return Vault(kubectl, m.VaultAuth), nil
+	return Vault(kubeconfig, m.VaultAuth), nil
 }
 
 // View Secret
@@ -166,7 +175,7 @@ func (m SecretsManager) View(secret SecretConfig) (string, error) {
 		return "", errors.New("no such local secrets file exists. try running truss secrets pull")
 	}
 
-	vault, err := m.vault(secret)
+	vault, err := m.Vault(secret)
 	if err != nil {
 		return "", err
 	}
@@ -181,7 +190,7 @@ func (m SecretsManager) View(secret SecretConfig) (string, error) {
 
 // EncryptSecret on disk with cypher text from vault
 func (m SecretsManager) EncryptSecret(secret SecretConfig) error {
-	vault, err := m.vault(secret)
+	vault, err := m.Vault(secret)
 	if err != nil {
 		return err
 	}

@@ -11,12 +11,15 @@ import (
 )
 
 func TestSecretDirConfig(t *testing.T) {
+	vault := createTestVault(t)
+
 	Convey("TestSecretConfig", t, func() {
 		dir, err := ioutil.TempDir("", "")
-		defer os.Remove(dir)
+		defer os.RemoveAll(dir)
 		So(err, ShouldBeNil)
 		So(dir, ShouldNotBeEmpty)
 
+		transitKey := "dir-config-test"
 		aContent := "a is best"
 		contentsMap := map[string]string{
 			"a": aContent,
@@ -27,10 +30,7 @@ func TestSecretDirConfig(t *testing.T) {
 		err = ioutil.WriteFile(path.Join(dir, "a"), []byte(aContent), 0644)
 		So(err, ShouldBeNil)
 
-		_ = aContent
-
-		vault := &mockVault{}
-		defaultConfig := SecretDirConfig{dirPath: dir, vaultPath: "secret/path"}
+		defaultConfig := SecretDirConfig{dirPath: dir, vaultPath: "kv/dir/path"}
 
 		Convey("existsOnDisk", func() {
 			Convey("true if file exists", func() {
@@ -51,14 +51,14 @@ func TestSecretDirConfig(t *testing.T) {
 
 		Convey("getDecryptedFromDisk", func() {
 			Convey("returns contents", func() {
-				bytes, err := SecretDirConfig{}.getDecryptedFromDisk(vault, "")
+				bytes, err := SecretDirConfig{}.getDecryptedFromDisk(vault, transitKey)
 				So(err, ShouldBeNil)
 				So(string(bytes), ShouldEqual, `{}
 `)
 			})
 
 			Convey("returns default if file doesn't exist", func() {
-				bytes, err := defaultConfig.getDecryptedFromDisk(vault, "")
+				bytes, err := defaultConfig.getDecryptedFromDisk(vault, transitKey)
 				So(err, ShouldBeNil)
 				So(string(bytes), ShouldEqual, secretYaml)
 			})
@@ -66,7 +66,7 @@ func TestSecretDirConfig(t *testing.T) {
 
 		Convey("getMapFromDisk", func() {
 			Convey("returns map of secrets", func() {
-				m, err := defaultConfig.getMapFromDisk(vault, "")
+				m, err := defaultConfig.getMapFromDisk(vault, transitKey)
 				So(err, ShouldBeNil)
 				So(m, ShouldResemble, contentsMap)
 			})
@@ -75,47 +75,53 @@ func TestSecretDirConfig(t *testing.T) {
 		Convey("saveToDiskFromVault", func() {
 			Convey("writes encrypted secrets", func() {
 				newDir, err := ioutil.TempDir("", "")
-				defer os.Remove(dir)
+				defer os.RemoveAll(newDir)
 				So(err, ShouldBeNil)
 				So(dir, ShouldNotBeEmpty)
 
-				secrets := map[string]interface{}{
-					defaultConfig.VaultPath(): contentsMap,
-				}
+				_, err = vault.Write(kv2DataPath(defaultConfig.vaultPath), map[string]interface{}{
+					"data": contentsMap,
+				})
+				So(err, ShouldBeNil)
 				config := SecretDirConfig{dirPath: newDir, vaultPath: defaultConfig.vaultPath}
-				err = config.saveToDiskFromVault(&mockVault{secrets: secrets}, "")
+				err = config.saveToDiskFromVault(vault, transitKey)
 				So(err, ShouldBeNil)
 
 				bytes, err := ioutil.ReadFile(path.Join(newDir, "a"))
 				So(err, ShouldBeNil)
-				So(string(bytes), ShouldEqual, aContent+"-encrypted")
+
+				decrypted, err := vault.Decrypt(transitKey, bytes)
+				So(err, ShouldBeNil)
+				So(string(decrypted), ShouldEqual, aContent)
 			})
 		})
 
 		Convey("writeToVault", func() {
 			Convey("writes to vault", func() {
-				err = defaultConfig.writeToVault(vault, "")
+				err = defaultConfig.writeToVault(vault, transitKey)
 				So(err, ShouldBeNil)
-				So(vault.commands, ShouldHaveLength, 1)
-				So(vault.commands, ShouldContain,
-					[]string{"kv", "put", "secret/path", "a=a is best"},
-				)
+
+				data, err := vault.GetMap(kv2DataPath(defaultConfig.vaultPath))
+				So(err, ShouldBeNil)
+				So(data, ShouldResemble, map[string]interface{}{
+					"a": contentsMap["a"],
+				})
 			})
 		})
 
 		Convey("saveToDisk", func() {
 			Convey("writes to disk", func() {
 				newDir, err := ioutil.TempDir("", "")
-				defer os.Remove(dir)
+				defer os.RemoveAll(newDir)
 				So(err, ShouldBeNil)
 				So(dir, ShouldNotBeEmpty)
 
-				err = SecretDirConfig{dirPath: newDir}.saveToDisk(vault, "", []byte(secretYaml))
+				err = SecretDirConfig{dirPath: newDir}.saveToDisk(vault, "test-trans", []byte(secretYaml))
 				So(err, ShouldBeNil)
 
 				bytes, err := ioutil.ReadFile(path.Join(newDir, "a"))
 				So(err, ShouldBeNil)
-				So(string(bytes), ShouldEqual, aContent+"-encrypted")
+				So(string(bytes), ShouldNotResemble, secretYaml)
 			})
 		})
 	})

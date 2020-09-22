@@ -7,8 +7,8 @@ type SecretConfig interface {
 	Kubeconfig() string
 	VaultPath() string
 	existsOnDisk() bool
-	getDecryptedFromDisk(vault VaultCmd, transitKeyName string) ([]byte, error)
-	saveToDisk(vault VaultCmd, transitKeyName string, raw []byte) error
-	saveToDiskFromVault(vault VaultCmd, transitKeyName string) error
-	writeToVault(vault VaultCmd, transitKeyName string) error
+	getDecryptedFromDisk(vault *VaultCmd, transitKeyName string) ([]byte, error)
+	saveToDisk(vault *VaultCmd, transitKeyName string, raw []byte) error
+	saveToDiskFromVault(vault *VaultCmd, transitKeyName string) error
+	writeToVault(vault *VaultCmd, transitKeyName string) error
 }
