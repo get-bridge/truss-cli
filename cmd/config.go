@@ -8,6 +8,8 @@ import (
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 func getKubeconfigName() (string, error) {
@@ -42,6 +44,25 @@ func getKubeconfig() (string, error) {
 		return "", err
 	}
 	return path.Join(kubeconfigDir, kubeconfig), nil
+}
+
+func getKubeconfigStruct() (*clientcmdapi.Config, error) {
+	kc, err := getKubeconfig()
+	if err != nil {
+		return nil, err
+	}
+	kcb, err := ioutil.ReadFile(kc)
+	if err != nil {
+		return nil, err
+	}
+
+	cc, err := clientcmd.NewClientConfigFromBytes(kcb)
+	if err != nil {
+		return nil, err
+	}
+
+	c, err := cc.RawConfig()
+	return &c, err
 }
 
 func getKubeDir() (string, error) {

@@ -6,6 +6,7 @@ require (
 	github.com/Songmu/prompter v0.3.0
 	github.com/aws/aws-sdk-go v1.31.2
 	github.com/creasty/defaults v1.5.0
+	github.com/davecgh/go-spew v1.1.1
 	github.com/go-git/go-git/v5 v5.1.0
 	github.com/hashicorp/vault v1.2.1-0.20200916223652-9510adcb9ad1
 	github.com/hashicorp/vault-plugin-auth-gcp v0.7.1-0.20200824223748-9b39891cb353 // indirect
