@@ -59,15 +59,15 @@ func TestSecretFileConfig(t *testing.T) {
 
 		Convey("getDecryptedFromDisk", func() {
 			Convey("returns contents", func() {
-				bytes, err := SecretFileConfig{}.getDecryptedFromDisk(vault, transitKey)
-				So(err, ShouldBeNil)
-				So(string(bytes), ShouldEqual, "secrets: {}")
-			})
-
-			Convey("returns default if file doesn't exist", func() {
 				bytes, err := defaultConfig.getDecryptedFromDisk(vault, transitKey)
 				So(err, ShouldBeNil)
 				So(string(bytes), ShouldEqual, fileContent)
+			})
+
+			Convey("errors if file doesn't exist", func() {
+				_, err := SecretFileConfig{}.getDecryptedFromDisk(vault, transitKey)
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldContainSubstring, "no such file")
 			})
 		})
 
@@ -138,6 +138,11 @@ func TestSecretFileConfig(t *testing.T) {
 
 				_, err = os.Stat(dir)
 				So(err, ShouldBeNil)
+			})
+
+			Convey("errors if not valid yaml", func() {
+				err = defaultConfig.saveToDisk(vault, transitKey, []byte(`{"asdf": {}}`))
+				So(err, ShouldEqual, ErrSecretFileConfigInvalidYaml)
 			})
 
 			Convey("writes to disk", func() {

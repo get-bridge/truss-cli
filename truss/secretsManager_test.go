@@ -13,6 +13,7 @@ import (
 func TestSecretsManager(t *testing.T) {
 	Convey("SecretsManager", t, func() {
 		tmp := os.TempDir()
+		defer os.RemoveAll(tmp)
 
 		secretsFileName := path.Join(tmp, "secrets.file")
 
