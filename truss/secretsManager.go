@@ -2,6 +2,7 @@ package truss
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -74,7 +75,7 @@ func (m SecretsManager) Edit(secret SecretConfig) (bool, error) {
 	modTimeAtOpen := info.ModTime()
 
 	// vim tmp file
-	cmd := exec.Command(viper.GetString("EDITOR"), tmpFile.Name())
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", viper.GetString("EDITOR"), tmpFile.Name()))
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Run()

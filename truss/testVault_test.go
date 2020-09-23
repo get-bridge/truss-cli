@@ -54,7 +54,7 @@ func createTestVault(t *testing.T) *VaultCmd {
 			return vault
 		}
 		time.Sleep(100 * time.Millisecond)
-		timeout += 1
+		timeout++
 	}
 	t.Fatal("vault engine not started")
 	return nil
