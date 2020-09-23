@@ -33,7 +33,10 @@ var refreshNodesCmd = &cobra.Command{
 		for _, asg := range asgs {
 			if viper.GetBool("refresh_yes") || prompter.YN("Trigger Instance Refresh on "+*asg.AutoScalingGroupName+"?", false) {
 				log.Printf("Triggering instance refresh on ASG %s", *asg.AutoScalingGroupName)
-				rnc.RefreshNodes(asg)
+
+				if err := rnc.RefreshNodes(asg); err != nil {
+					return err
+				}
 			}
 		}
 
