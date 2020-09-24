@@ -28,3 +28,7 @@ var secretsPullCmd = &cobra.Command{
 		return sm.Pull(secret)
 	},
 }
+
+func init() {
+	secretsPullCmd.Flags().BoolVarP(&pullAll, "all", "a", false, "Pull all environments")
+}

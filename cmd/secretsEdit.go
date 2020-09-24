@@ -32,11 +32,14 @@ var secretsEditCmd = &cobra.Command{
 		if editPush || prompter.YesNo("Push to environment "+secret.Name()+"?", false) {
 			if len(args) > 0 {
 				return secretsPushCmd.RunE(cmd, args)
-			} else {
-				newArgs := []string{secret.Name()}
-				return secretsPushCmd.RunE(cmd, newArgs)
 			}
+			newArgs := []string{secret.Name()}
+			return secretsPushCmd.RunE(cmd, newArgs)
 		}
 		return nil
 	},
+}
+
+func init() {
+	secretsEditCmd.Flags().BoolVarP(&editPush, "push", "y", false, "Push after editing, if saved")
 }

@@ -80,10 +80,6 @@ func findSecret(sm *truss.SecretsManager, args []string, verb string) (truss.Sec
 }
 
 func init() {
-	secretsEditCmd.Flags().BoolVarP(&editPush, "push", "y", false, "Push after editing, if saved")
-	secretsPushCmd.Flags().BoolVarP(&pushAll, "all", "a", false, "Push all environments")
-	secretsPullCmd.Flags().BoolVarP(&pullAll, "all", "a", false, "Pull all environments")
-
 	secretsCmd.AddCommand(secretsEditCmd)
 	secretsCmd.AddCommand(secretsEncryptCmd)
 	secretsCmd.AddCommand(secretsViewCmd)
