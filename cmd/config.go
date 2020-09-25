@@ -21,13 +21,17 @@ func getKubeconfigName() (string, error) {
 	environments := viper.GetStringMapString("environments")
 	kubeconfig := environments[env]
 	if kubeconfig == "" {
-		var keys []string
-		for k := range environments {
-			keys = append(keys, k)
-		}
-		return "", fmt.Errorf("unknown env %v. Options: %v", env, keys)
+		return "", fmt.Errorf("unknown env %v. Options: %v", env, getEnvironmentKeys(environments))
 	}
 	return kubeconfig, nil
+}
+
+func getEnvironmentKeys(environments map[string]string) []string {
+	var keys []string
+	for k := range environments {
+		keys = append(keys, k)
+	}
+	return keys
 }
 
 func getKubeconfig() (string, error) {

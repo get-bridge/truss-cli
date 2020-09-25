@@ -1,21 +1,18 @@
 package truss
 
 import (
-	"fmt"
+	"errors"
 	"io"
 	"os"
 	"os/exec"
-	"path/filepath"
 )
 
 // WrapInput input for Wrap
 type WrapInput struct {
-	Env         string
-	Kubeconfigs map[string]interface{}
-	KubeDir     string
-	Stdout      io.Writer
-	Stderr      io.Writer
-	Stdin       io.Reader
+	Kubeconfig string
+	Stdout     io.Writer
+	Stderr     io.Writer
+	Stdin      io.Reader
 }
 
 // Wrap exports relevant kubeconfig and runs command
@@ -24,15 +21,12 @@ func Wrap(input *WrapInput, bin string, arg ...string) error {
 	cmd.Stdout = input.Stdout
 	cmd.Stdin = input.Stdin
 	cmd.Stderr = input.Stderr
-	envKubeconfig := input.Kubeconfigs[input.Env]
-	var kubeconfig string
 
-	if envKubeconfig != nil {
-		kubeconfigName := fmt.Sprintf("%s", envKubeconfig)
-		kubeconfig = filepath.Join(input.KubeDir, kubeconfigName)
-		cmd.Env = append(os.Environ(), "KUBECONFIG="+kubeconfig)
+	if input.Kubeconfig == "" {
+		return errors.New("Kubeconfig is required")
 	}
 
+	cmd.Env = append(os.Environ(), "KUBECONFIG="+input.Kubeconfig)
 	err := cmd.Run()
 	if err != nil {
 		return err

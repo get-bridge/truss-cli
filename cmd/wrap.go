@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/instructure-bridge/truss-cli/truss"
@@ -26,10 +27,10 @@ This allows you to do this:
 		if err != nil {
 			return err
 		}
-		kubeconfigs := viper.GetStringMap("environments")
-		kubeDir, err := getKubeDir()
-		if err != nil {
-			return err
+		environments := viper.GetStringMapString("environments")
+
+		if env == "" {
+			return fmt.Errorf("-e flag is required. Options: %v", getEnvironmentKeys(environments))
 		}
 
 		if len(args) == 0 {
@@ -40,13 +41,17 @@ This allows you to do this:
 		bin := args[0]
 		binargs := args[1:]
 
+		kubeconfig, err := getKubeconfig()
+
+		if err != nil {
+			return err
+		}
+
 		input := &truss.WrapInput{
-			Env:         env,
-			Kubeconfigs: kubeconfigs,
-			KubeDir:     kubeDir,
-			Stdout:      cmd.OutOrStdout(),
-			Stdin:       os.Stdin,
-			Stderr:      cmd.ErrOrStderr(),
+			Kubeconfig: kubeconfig,
+			Stdout:     cmd.OutOrStdout(),
+			Stdin:      os.Stdin,
+			Stderr:     cmd.ErrOrStderr(),
 		}
 
 		err = truss.Wrap(input, bin, binargs...)

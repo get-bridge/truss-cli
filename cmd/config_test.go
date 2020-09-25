@@ -83,4 +83,17 @@ func TestConfig(t *testing.T) {
 			So(must(envClusterRoleArn()), ShouldEqual, "arn:aws:iam::127178877223:role/xacct/ops-admin")
 		})
 	})
+
+	Convey("getEnvironmentKeys", t, func() {
+		Convey("returns available environment keys", func() {
+			environments := map[string]string{
+				"dev":  "dev-kube",
+				"prod": "prod-kube",
+			}
+
+			keys := getEnvironmentKeys(environments)
+
+			So(keys, ShouldResemble, []string{"dev", "prod"})
+		})
+	})
 }
