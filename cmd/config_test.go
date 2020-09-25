@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"sort"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -92,6 +93,7 @@ func TestConfig(t *testing.T) {
 			}
 
 			keys := getEnvironmentKeys(environments)
+			sort.Strings(keys)
 
 			So(keys, ShouldResemble, []string{"dev", "prod"})
 		})
