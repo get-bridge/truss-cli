@@ -25,6 +25,8 @@ func TestWrap(t *testing.T) {
 			cmd.SetOut(buff)
 			cmd.SetArgs([]string{
 				"wrap",
+				"-e",
+				"", // Simulating passing in no flag, here. I think persistent flag state is leaking between tests. TODO: Figure out a better integration testing strategy
 				"--",
 				"printenv",
 			})
