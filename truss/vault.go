@@ -72,6 +72,11 @@ func (vault *VaultCmd) vaultAddr() string {
 
 // PortForward instantiates a port-forward for Vault
 func (vault *VaultCmd) PortForward() (string, error) {
+	_, err := vault.auth.LoadCreds()
+	if err != nil {
+		return "", err
+	}
+
 	if vault.portForwarded != nil {
 		return *vault.portForwarded, nil
 	}

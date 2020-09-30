@@ -1,9 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
-	"github.com/Songmu/prompter"
 	"github.com/spf13/cobra"
 )
 
@@ -27,13 +24,7 @@ var secretsEncryptCmd = &cobra.Command{
 			return err
 		}
 
-		if encryptPush || prompter.YesNo(fmt.Sprintf("Push to environment %s?", secret.Name()), false) {
-			if len(args) > 0 {
-				return secretsPushCmd.RunE(cmd, args)
-			}
-			newArgs := []string{secret.Name()}
-			return secretsPushCmd.RunE(cmd, newArgs)
-		}
+		promptPushSecret(sm, secret)
 		return nil
 	},
 }

@@ -38,6 +38,7 @@ func newSecretsManager() (*truss.SecretsManager, error) {
 			} else {
 				secretsFile = path.Join(dir, fileInfo.Name())
 				foundSecrets = true
+				os.Chdir(dir)
 			}
 		}
 	}
@@ -49,6 +50,8 @@ func findSecret(sm *truss.SecretsManager, args []string, verb string) (truss.Sec
 	var name, kubeconfig string
 	if len(args) >= 1 {
 		name = args[0]
+	} else if len(sm.Secrets) == 1 {
+		return sm.Secrets[0], nil
 	} else {
 		name = prompter.Choose(fmt.Sprintf("Which secret would you like to %s?", verb), sm.SecretNames(), "")
 	}

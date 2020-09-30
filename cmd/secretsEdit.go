@@ -1,7 +1,8 @@
 package cmd
 
 import (
-	"github.com/Songmu/prompter"
+	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
@@ -26,16 +27,11 @@ var secretsEditCmd = &cobra.Command{
 			return err
 		}
 		if !saved {
+			fmt.Println("secrets not saved.")
 			return nil
 		}
 
-		if editPush || prompter.YesNo("Push to environment "+secret.Name()+"?", false) {
-			if len(args) > 0 {
-				return secretsPushCmd.RunE(cmd, args)
-			}
-			newArgs := []string{secret.Name()}
-			return secretsPushCmd.RunE(cmd, newArgs)
-		}
+		promptPushSecret(sm, secret)
 		return nil
 	},
 }

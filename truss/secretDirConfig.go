@@ -75,6 +75,37 @@ func (s SecretDirConfig) getDecryptedFromDisk(vault *VaultCmd, transitKeyName st
 	return y.Bytes(), nil
 }
 
+// getMapFromVault returns the yaml from vault
+func (s SecretDirConfig) getMapFromVault(vault *VaultCmd) (map[string]string, error) {
+	secrets, err := vault.GetMap(kv2DataPath(s.vaultPath))
+	if err != nil {
+		return nil, err
+	}
+
+	secretStringMap := map[string]string{}
+	for k, v := range secrets {
+		vString, ok := v.(string)
+		if !ok {
+			return nil, fmt.Errorf("failed to parse secrets: %v", secrets)
+		}
+		secretStringMap[k] = vString
+	}
+	return secretStringMap, nil
+}
+
+// getFromVault returns the yaml from vault
+func (s SecretDirConfig) getFromVault(vault *VaultCmd) ([]byte, error) {
+	data, err := s.getMapFromVault(vault)
+	if err != nil {
+		return nil, err
+	}
+	y := bytes.NewBuffer(nil)
+	if err := yaml.NewEncoder(y).Encode(data); err != nil {
+		return nil, err
+	}
+	return y.Bytes(), nil
+}
+
 // getMapFromDisk returns a collection of secrets as a map
 func (s SecretDirConfig) getMapFromDisk(vault *VaultCmd, transitKeyName string) (map[string]string, error) {
 	dirData := make(map[string]string)
@@ -110,18 +141,9 @@ func (s SecretDirConfig) getMapFromDisk(vault *VaultCmd, transitKeyName string) 
 
 // writeMapToDisk serializes a collection of secrets and writes them encrypted to disk
 func (s SecretDirConfig) saveToDiskFromVault(vault *VaultCmd, transitKeyName string) error {
-	secrets, err := vault.GetMap(kv2DataPath(s.vaultPath))
+	secretStringMap, err := s.getMapFromVault(vault)
 	if err != nil {
 		return err
-	}
-
-	secretStringMap := map[string]string{}
-	for k, v := range secrets {
-		vString, ok := v.(string)
-		if !ok {
-			return fmt.Errorf("failed to parse secrets: %v", secrets)
-		}
-		secretStringMap[k] = vString
 	}
 
 	for name, secretData := range secretStringMap {
