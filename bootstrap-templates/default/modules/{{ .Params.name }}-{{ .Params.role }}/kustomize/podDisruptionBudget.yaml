@@ -1,8 +1,10 @@
+---
 apiVersion: policy/v1beta1
 kind: PodDisruptionBudget
 metadata:
   name: pdb
 spec:
+  # How many pods can Kubernetes make unavailable during cluster upgrades?
   maxUnavailable: 1
   selector:
     matchLabels: {}
