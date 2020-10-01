@@ -1,8 +1,9 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/instructure-bridge/truss-cli/truss"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -22,7 +23,7 @@ As it will port-forward to the service and call aws auth`,
 		if err != nil {
 			return err
 		}
-		log.Println(string(output))
+		fmt.Println(string(output))
 		return nil
 	},
 }
@@ -40,4 +41,5 @@ func getVaultAuth() truss.VaultAuth {
 
 func init() {
 	rootCmd.AddCommand(vaultCmd)
+	vaultCmd.Flags().SetInterspersed(false)
 }

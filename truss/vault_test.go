@@ -1,6 +1,7 @@
 package truss
 
 import (
+	"encoding/base64"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -10,8 +11,10 @@ func TestVault(t *testing.T) {
 	vault := createTestVault(t)
 
 	Convey("Vault", t, func() {
-		fooSecretData := map[string]string{
+		binaryContent := []byte{0x0, 0xe8, 0x03, 0xd0, 0x07}
+		fooSecretData := map[string]interface{}{
 			"secret": "bar",
+			"binary": binaryContent,
 		}
 		_, err := vault.Write("kv/data/foo", map[string]interface{}{
 			"data": fooSecretData,
@@ -43,6 +46,7 @@ func TestVault(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(list, ShouldResemble, map[string]interface{}{
 					"secret": "bar",
+					"binary": base64.StdEncoding.EncodeToString(binaryContent),
 				})
 			})
 		})
