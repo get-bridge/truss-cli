@@ -89,9 +89,10 @@ secrets:
 			err = sm.Pull(firstSecret)
 			So(err, ShouldBeNil)
 
-			secretString, err := sm.View(firstSecret)
+			localContent, remoteContent, err := sm.View(firstSecret)
 			So(err, ShouldBeNil)
-			So(secretString, ShouldEqual, secretsFileContent)
+			So(localContent, ShouldEqual, secretsFileContent)
+			So(remoteContent, ShouldEqual, secretsFileContent)
 		})
 	})
 }
