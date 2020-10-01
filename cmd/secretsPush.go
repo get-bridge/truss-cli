@@ -28,3 +28,7 @@ var secretsPushCmd = &cobra.Command{
 		return sm.Push(secret)
 	},
 }
+
+func init() {
+	secretsPushCmd.Flags().BoolVarP(&pushAll, "all", "a", false, "Push all environments")
+}
