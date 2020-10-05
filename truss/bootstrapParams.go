@@ -7,12 +7,19 @@ import (
 )
 
 // BootstrapParams represents user-provided parameters for a template
-type BootstrapParams map[string]interface{}
+type BootstrapParams map[string]*BootstrapParameter
 
 // LoadFromConfig reads params from a given configuration
 func (p *BootstrapParams) LoadFromConfig(c *BootstrapConfig) error {
 	for k, v := range c.Params {
-		(*p)[k] = v
+		var param *BootstrapParameter
+		switch value := v.(type) {
+		case bool:
+			param = NewBootstrapParameterBool(value)
+		case string:
+			param = NewBootstrapParameter(value)
+		}
+		(*p)[k] = param
 	}
 	return nil
 }
@@ -22,13 +29,13 @@ func (p *BootstrapParams) LoadFromFlags(s map[string]string) error {
 	for k, v := range s {
 		switch v {
 		case "true":
-			(*p)[k] = true
+			(*p)[k] = NewBootstrapParameterBool(true)
 			break
 		case "false":
-			(*p)[k] = false
+			(*p)[k] = NewBootstrapParameterBool(false)
 			break
 		default:
-			(*p)[k] = v
+			(*p)[k] = NewBootstrapParameter(v)
 		}
 	}
 	return nil
@@ -46,12 +53,12 @@ func (p BootstrapParams) Validate(m *BootstrapManifest) (errs []string, err erro
 
 		switch strings.ToLower(param.Type) {
 		case "bool":
-			if _, ok := value.(bool); !ok {
+			if value.Type != "bool" {
 				errs = append(errs, fmt.Sprintf("param [%s] must be a boolean", param.Name))
 				continue
 			}
 		case "string":
-			if _, ok := value.(string); !ok {
+			if value.Type != "string" {
 				errs = append(errs, fmt.Sprintf("param [%s] must be a string", param.Name))
 				continue
 			}
