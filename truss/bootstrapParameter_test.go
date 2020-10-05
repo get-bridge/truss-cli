@@ -36,8 +36,8 @@ func TestBootstrapParameter(t *testing.T) {
 		})
 
 		Convey("Even bools can be converted (useful for eg. Python)", func() {
-			So(NewBootstrapParameterBool(true).CamelCase, ShouldEqual, "True")
-			So(NewBootstrapParameterBool(false).CamelCase, ShouldEqual, "False")
+			So(NewBootstrapParameterBool(true).PascalCase, ShouldEqual, "True")
+			So(NewBootstrapParameterBool(false).PascalCase, ShouldEqual, "False")
 		})
 	})
 }
