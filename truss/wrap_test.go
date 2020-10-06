@@ -25,17 +25,6 @@ func TestWrap(t *testing.T) {
 			So(out.String(), ShouldContainSubstring, "hello")
 		})
 
-		Convey("returns error when there's no kubeconfig", func() {
-			input := &WrapInput{
-				Stdout: out,
-				Stderr: os.Stderr,
-				Stdin:  os.Stdin,
-			}
-
-			err := Wrap(input, "echo", "hello")
-			So(err.Error(), ShouldEqual, "Kubeconfig is required")
-		})
-
 		Convey("sets KUBECONFIG for the command", func() {
 			input := &WrapInput{
 				Kubeconfig: "/kube/config",

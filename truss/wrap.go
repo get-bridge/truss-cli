@@ -1,7 +1,6 @@
 package truss
 
 import (
-	"errors"
 	"io"
 	"os"
 	"os/exec"
@@ -22,11 +21,10 @@ func Wrap(input *WrapInput, bin string, arg ...string) error {
 	cmd.Stdin = input.Stdin
 	cmd.Stderr = input.Stderr
 
-	if input.Kubeconfig == "" {
-		return errors.New("Kubeconfig is required")
+	if input.Kubeconfig != "" {
+		cmd.Env = append(os.Environ(), "KUBECONFIG="+input.Kubeconfig)
 	}
 
-	cmd.Env = append(os.Environ(), "KUBECONFIG="+input.Kubeconfig)
 	err := cmd.Run()
 	if err != nil {
 		return err

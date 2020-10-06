@@ -1,12 +1,10 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/instructure-bridge/truss-cli/truss"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // wrapCmd represents the wrap command
@@ -23,16 +21,6 @@ This allows you to do this:
 `,
 	Short: "Wraps a subcommand with truss environment variables",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		env, err := cmd.Flags().GetString("env")
-		if err != nil {
-			return err
-		}
-		environments := viper.GetStringMapString("environments")
-
-		if env == "" {
-			return fmt.Errorf("-e flag is required. Options: %v", getEnvironmentKeys(environments))
-		}
-
 		if len(args) == 0 {
 			cmd.Help()
 			os.Exit(0)
