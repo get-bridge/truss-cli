@@ -1,6 +1,8 @@
 name: default
 description: It's the best
 version: 0.1.0
+settings:
+  useTrussDir: true
 params:
   - name: name
     type: string

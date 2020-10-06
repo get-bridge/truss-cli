@@ -5,7 +5,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"text/template"
+)
+
+// IncludeTemplateRE - regular expression to match the template inclusion expression
+var IncludeTemplateRE = regexp.MustCompile(
+	"\\{\\{include ([A-Za-z0-9_-]+) as ((\\.[A-Za-z_][A-Za-z0-9_]+)+)\\}\\}",
 )
 
 // Bootstrapper bootstraps a deployment
@@ -13,10 +19,16 @@ type Bootstrapper struct {
 	TemplateSource
 	TrussDir string
 	Template string
+
+	overrideUseTrussDir *bool
 }
 
 // BootstrapManifest represents the manifest thingy
 type BootstrapManifest struct {
+	Settings struct {
+		UseTrussDir bool `yaml:"useTrussDir"`
+	} `yaml:"settings"`
+
 	Params []struct {
 		Name    string      `yaml:"name"`
 		Type    string      `yaml:"type"`
@@ -35,20 +47,33 @@ type TemplateSource interface {
 
 // NewBootstrapper returns a new TemplateSource
 func NewBootstrapper(ts TemplateSource, trussDir, template string) *Bootstrapper {
-	return &Bootstrapper{ts, trussDir, template}
+	return &Bootstrapper{ts, trussDir, template, nil}
 }
 
 // GetTemplateManifest gets a template's manifest
 func (b Bootstrapper) GetTemplateManifest() *BootstrapManifest {
-	return b.TemplateSource.GetTemplateManifest(b.Template)
+	manifest := b.TemplateSource.GetTemplateManifest(b.Template)
+
+	if b.overrideUseTrussDir != nil {
+		manifest.Settings.UseTrussDir = *b.overrideUseTrussDir
+	}
+
+	return manifest
 }
 
 // Bootstrap does the thing!
 func (b Bootstrapper) Bootstrap(params *BootstrapParams) error {
-	wd, _ := os.Getwd()
-	trussDir := filepath.Join(wd, b.TrussDir)
+	var trussDir string
+	settings := b.GetTemplateManifest().Settings
 
-	if _, err := os.Stat(trussDir); err == nil {
+	wd, _ := os.Getwd()
+	trussDir = wd
+
+	if settings.UseTrussDir {
+		trussDir = filepath.Join(wd, b.TrussDir)
+	}
+
+	if _, err := os.Stat(trussDir); settings.UseTrussDir && err == nil {
 		return fmt.Errorf("the target directory [%s] already exists", trussDir)
 	}
 
@@ -69,6 +94,27 @@ func (b Bootstrapper) Bootstrap(params *BootstrapParams) error {
 		}
 
 		if info.IsDir() {
+			if IncludeTemplateRE.MatchString(rel) {
+				submatch := IncludeTemplateRE.FindStringSubmatch(rel)
+				newTemplate := submatch[1]
+				nameExpr := fmt.Sprintf("{{ %s }}", submatch[2])
+
+				newRel, err := quickTemplate(nameExpr, data)
+				if err != nil {
+					return err
+				}
+
+				boot := NewBootstrapper(b.TemplateSource, b.TrussDir, newTemplate)
+				boot.overrideUseTrussDir = newBoolPtr(false)
+				subDir := filepath.Join(wd, newRel)
+
+				os.MkdirAll(subDir, 0766)
+				os.Chdir(subDir)
+				defer os.Chdir(wd)
+
+				return boot.Bootstrap(params)
+			}
+
 			dstDir, err := quickTemplate(filepath.Join(trussDir, rel), data)
 			if err != nil {
 				return err
@@ -106,4 +152,9 @@ func quickTemplate(tmpl string, data map[string]interface{}) (string, error) {
 		return "", err
 	}
 	return out.String(), nil
+}
+
+func newBoolPtr(val bool) *bool {
+	b := val
+	return &b
 }
