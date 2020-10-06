@@ -1,0 +1,94 @@
+{
+  "program": {
+    "meta": {},
+    "programs": [
+      {
+        "id": "1",
+        "title": "My Test Program",
+        "description": "My Test Program Description",
+        "course_count": 3,
+        "item_count": 4,
+        "publishable": true,
+        "is_published": true,
+        "has_unpublished_changes": false,
+        "step_notifications": true,
+        "unfinished_learners_count": 1,
+        "external_id": null,
+        "has_certificate": false,
+        "enrollment_counts": {
+          "all": 4,
+          "overdue": 0,
+          "not_finished": 2,
+          "finished": 2
+        },
+        "sub_account": {
+          "id": 1,
+          "name": "Acme, Co",
+          "sub_accounts_exist": true,
+          "is_root": true,
+          "not_current": false,
+          "tac_type": "domestic",
+          "tac_custom_body_markup": null,
+          "tac_updated_at": "2018-02-28T17:55:41.463Z"
+        },
+        "items": [
+          {
+            "id": "4",
+            "item_type": "CourseTemplate",
+            "title": "test program final course",
+            "description": null,
+            "default_days_until_due": 7,
+            "default_due_on_date": null,
+            "editable": true,
+            "estimated_time": 0,
+            "is_published": true,
+            "passing_threshold": 80,
+            "sessions_count": 0,
+            "max_quiz_attempts": null,
+            "continuing_education_credits": null,
+            "default_approver": null,
+            "requires_approval": false,
+            "requires_evidence": false,
+            "blocks_progress": false,
+            "icon": null
+          }
+        ],
+        "course_templates": [
+          {
+            "id": "4",
+            "estimated_time": 0,
+            "passing_threshold": 80,
+            "max_quiz_attempts": null,
+            "continuing_education_credits": null,
+            "default_days_until_due": 7,
+            "title": "test program final course",
+            "description": null,
+            "is_published": true,
+            "published_at": "2017-12-07T10:29:09.247-07:00",
+            "has_certificate": false,
+            "course_type": "bridge",
+            "external_id": null
+          }
+        ],
+        "graphic": {
+          "gradient": 3,
+          "image": null
+        },
+        "is_non_linear": false,
+        "estimated_time": 1,
+        "open_enrollment": false,
+        "uuid": "2d3a2312",
+        "enroll_url": "http://acme.bridgeapp.com/learner/programs/2d3a2312/enroll",
+        "has_shared_content": false,
+        "is_shared": false,
+        "due_date_type": "relative",
+        "default_due_on_date": null,
+        "default_days_until_due": 14,
+        "expires": true,
+        "default_days_until_expiration": null,
+        "auto_re_enroll": true,
+        "re_enrollment_period": 14
+      }
+    ]
+  }
+}

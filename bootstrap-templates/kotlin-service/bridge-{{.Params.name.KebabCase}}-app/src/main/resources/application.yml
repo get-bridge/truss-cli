@@ -1,0 +1,21 @@
+# org.springframework.boot.autoconfigure.web.ServerProperties
+server:
+  forward-headers-strategy: "NATIVE"
+  error:
+    whitelabel.enabled: false
+  servlet:
+    context-path: "/api/{{.Params.name.KebabCase}}"
+
+spring:
+  # org.springframework.boot.autoconfigure.flyway.FlywayProperties
+  flyway:
+    out-of-order: true
+    check-location: false
+  # org.springframework.boot.autoconfigure.AutoConfigurationImportSelector.PROPERTY_NAME_AUTOCONFIGURE_EXCLUDE
+  autoconfigure.exclude: []
+
+management:
+  endpoints:
+    # org.springframework.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties
+    web:
+      exposure.include: "health,prometheus"

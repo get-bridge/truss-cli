@@ -1,0 +1,21 @@
+---
+apiVersion: truss.bridgeops.sh/v1
+kind: TenantConfig
+metadata:
+  name: {{.Params.name}}
+  labels:
+    istio-injection: enabled
+data:
+  applications:
+  - name: api
+    serviceAccount:
+      metadata:
+        annotations:
+          eks.amazonaws.com/role-arn: arn:aws:iam::127178877223:role/{{.Params.name}}-app-role-{env}-{region}
+    vault:
+      - path: "secret/data/bridge/{env}/{region}/shared/*"
+        capabilities: ["read", "list"]
+      - path: "secret/data/bridge/{env}/{region}/{{.Params.name}}/api"
+        capabilities: ["read", "list"]
+      - path: "secret/data/bridge/{env}/{region}/{{.Params.name}}/message_bus"
+        capabilities: ["create", "update", "read", "list"]

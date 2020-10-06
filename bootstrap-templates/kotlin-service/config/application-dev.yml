@@ -1,0 +1,26 @@
+# Common configuration for local development.
+
+spring:
+  # org.springframework.boot.autoconfigure.jdbc.DataSourceProperties
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/bridge_{{.Params.name.FlatCase}}_dev
+    username: postgres
+    password: ${POSTGRES_PASSWORD:postgres}
+
+# org.springframework.boot.autoconfigure.web.ServerProperties
+server:
+  port: {{.Params.port}}
+
+management:
+  endpoints:
+    # org.springframework.boot.actuate.autoconfigure.endpoint.jmx.JmxEndpointProperties
+    jmx:
+      exposure.include: "*"
+    # org.springframework.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties
+    web:
+      exposure.include: "*"
+
+bridge:
+  messagebus:
+    pulsar:
+      serviceUrl: pulsar://${PULSAR_HOST:localhost}:${PULSAR_PORT:6650}

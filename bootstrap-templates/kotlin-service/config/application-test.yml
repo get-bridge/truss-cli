@@ -1,0 +1,18 @@
+# Common configuration for tests.  Specify properties here only at special cases, use @SpringBootTest(properties = "") instead
+
+management:
+  # org.springframework.boot.actuate.autoconfigure.metrics.MetricsProperties
+  metrics:
+    use-global-registry: false
+
+spring:
+  # org.springframework.boot.autoconfigure.jdbc.DataSourceProperties
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/bridge_{{.Params.name.FlatCase}}_test
+    username: postgres
+    password: ${POSTGRES_PASSWORD:postgres}
+
+bridge:
+  messagebus:
+    pulsar:
+      serviceUrl: pulsar://${PULSAR_HOST:localhost}:${PULSAR_PORT:6650}

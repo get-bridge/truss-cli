@@ -1,0 +1,134 @@
+#!/usr/bin/env groovy
+
+pipeline {
+  agent { label 'bridge-docker' }
+
+  options {
+    disableConcurrentBuilds()
+  }
+
+  stages {
+    stage('Docker Compose') {
+      steps {
+        sh 'docker-compose up -d db'
+      }
+    }
+
+    stage('Build Project') {
+      steps {
+        withCredentials([string(credentialsId: 'ARTIFACTORY_READONLY_API_KEY', variable: 'ARTIFACTORY_READONLY_API_KEY')]) {
+          sh '''
+            ./gradlew --no-daemon build
+          '''
+        }
+      }
+    }
+
+    stage('Run tests') {
+      when {}
+      parallel {
+        stage('Check') {
+          steps {
+            sh '''
+              docker-compose run --name api_test api ./gradlew check
+            '''
+
+            sh '''
+              docker run --rm -v "`pwd`:/app" -w /app python:3 bash -c '
+                pip install -r tools/generator/requirements.txt &&
+                python ./tools/generator/render-environments.py --compare
+              '
+            '''
+          }
+        }
+      }
+    }
+
+    stage('Upload artifacts') {
+      steps {
+        withDeployCredentials {
+          sh """
+            docker-compose run -T cg bash -c '
+              cg config add s3://cloudgate-configs/bridge-shared.tgz &&
+              cg build -e edge-cmh -u deploy
+            '
+          """
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      sh 'docker cp api_test:/app/bridge-notification-core/build build-core'
+      sh 'docker cp api_test:/app/bridge-notification-web/build build-web'
+      junit 'build*/test-results/**/*.xml'
+      jacoco changeBuildStatus: true, exclusionPattern: '**/*Test*.class', minimumLineCoverage: '50', sourcePattern: '**/src/main/kotlin', sourceInclusionPattern: '**/*.kt,**/*.java'
+
+      sh """
+        docker-compose down --remove-orphans --rmi all --volumes || true
+      """
+    }
+
+    success {
+      sh '''#!/usr/bin/env bash
+        GIT_COMMIT=$(git rev-parse HEAD)
+        echo "####################################################"
+        echo "Use the following commands to deploy this service:"
+        echo "  Edge:        <Deployed automatically>"
+        echo "  Staging:     ./tools/deploy.sh -t ${GIT_COMMIT} staging"
+        echo "  Production:  ./tools/deploy.sh -t ${GIT_COMMIT} prod"
+        echo "####################################################"
+      '''
+
+      sh '''#!/usr/bin/env bash
+      mkdir -p build
+
+      {
+        echo "sha=$GIT_COMMIT"
+        echo "message=$GERRIT_CHANGE_SUBJECT"
+        echo "committer_name=$GERRIT_CHANGE_OWNER_NAME"
+        echo "committer_email=$GERRIT_CHANGE_OWNER_EMAIL"
+      } > build/build.properties
+      '''
+
+      archiveArtifacts 'build/build.properties'
+    }
+
+    cleanup {
+      sh '''#!/usr/bin/env bash
+        docker-compose down --remove-orphans --rmi all --volumes || true
+
+        # Fix: clean up remaining networks from docker
+        if [[ $(docker network ls -qf name=bridge-notification-center | wc -l) -gt 0 ]]; then
+          docker network ls -qf name=bridge-notification-center | xargs docker network rm || true
+        fi
+      '''
+
+      deleteDir()
+    }
+  }
+}
+
+
+def withDeployCredentials(Closure block) {
+  def credentialsId = "bridge-notification-center-deployer-shared"
+
+  withCredentials([
+    [
+      $class: 'AmazonWebServicesCredentialsBinding',
+      credentialsId: credentialsId,
+      accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+      secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+    ],
+    string(credentialsId: 'ARTIFACTORY_READONLY_API_KEY', variable: 'ARTIFACTORY_READONLY_API_KEY')
+  ]) {
+    withEnv([
+        "COMPOSE_FILE=docker-compose.ci.yml",
+        "ARTIFACTORY_USERNAME=jenkins-readonly",
+        "ARTIFACTORY_PASSWORD=${env.ARTIFACTORY_READONLY_API_KEY}",
+    ]) {
+      block()
+    }
+  }
+}

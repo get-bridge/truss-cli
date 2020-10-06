@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+  db:
+    image: postgres:11.7
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./dev/postgres/initdb.d:/docker-entrypoint-initdb.d:ro
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - ${DB_PORT:-5432}:5432
+
+  # learn-json-server:
+  #   image: clue/json-server:latest
+  #   ports:
+  #     - ${LEARN_JSON_SERVER_PORT:-3000}:80
+  #   volumes:
+  #     - ./dev/learn-json-server/config:/config:ro
+  #     - ./dev/learn-json-server/data:/data:ro
+  #   command: --routes /config/routes.json --middlewares /config/middleware.js
+
+  # pulsar:
+  #   image: apachepulsar/pulsar:2.5.2
+  #   command: "bin/pulsar standalone"
+  #   volumes:
+  #     - pulsar-data:/pulsar/data
+  #   ports:
+  #     - ${PULSAR_PORT:-6650}:6650
+  #     - ${PULSAR_ADMIN_PORT:-7280}:8080
+
+volumes:
+  pgdata:
+  # pulsar-data:

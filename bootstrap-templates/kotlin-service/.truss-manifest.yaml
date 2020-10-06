@@ -1,0 +1,25 @@
+name: kotlin-service
+description: Kotlin service template
+version: 0.1.0
+settings:
+  useTrussDir: false
+params:
+  - name: name
+    type: string
+    prompt: What's the name of your app?
+  - name: role
+    type: string
+    prompt: What's the role of your service? (i.e. api, web)
+  - name: httpPort
+    type: string
+    prompt: What is your app's HTTP port?
+  - name: image
+    type: string
+    prompt: What is the name of your Docker image? Don't include any tags
+  - name: trigger_jenkins_job
+    type: string
+    prompt: What is the name of your Jenkins postmerge job?
+  - name: starlord
+    type: bool
+    prompt: Is your Container Image published to Starlord?
+    default: true

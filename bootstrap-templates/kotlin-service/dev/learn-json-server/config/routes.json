@@ -1,0 +1,4 @@
+{
+  "/api/author/programs?search=*": "/program",
+  "/api/author/programs/*": "/program"
+}

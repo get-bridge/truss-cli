@@ -1,0 +1,9 @@
+bridge:
+  credentials:
+    learn:
+      host-template: https://<tenant_id>.edge.bridgeapp.com/
+      suite-token: SUITE_TOKEN
+  {{.Params.name}}:
+    dev-suite-token: token
+  suite:
+    tokens: bridge.credentials.learn.suite-token,bridge.{{.Params.name}}.dev-suite-token
