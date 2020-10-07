@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"sort"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -81,6 +82,20 @@ func TestConfig(t *testing.T) {
 
 		Convey("parses cluster role arn", func() {
 			So(must(envClusterRoleArn()), ShouldEqual, "arn:aws:iam::127178877223:role/xacct/ops-admin")
+		})
+	})
+
+	Convey("getEnvironmentKeys", t, func() {
+		Convey("returns available environment keys", func() {
+			environments := map[string]string{
+				"dev":  "dev-kube",
+				"prod": "prod-kube",
+			}
+
+			keys := getEnvironmentKeys(environments)
+			sort.Strings(keys)
+
+			So(keys, ShouldResemble, []string{"dev", "prod"})
 		})
 	})
 }
