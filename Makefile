@@ -1,4 +1,4 @@
-VERSION = v0.0.10
+VERSION = v0.1.1
 
 release:
 	git tag -a ${VERSION} -m ${VERSION}
