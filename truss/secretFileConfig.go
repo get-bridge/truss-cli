@@ -82,6 +82,22 @@ func (s SecretFileConfig) getDecryptedFromDisk(vault *VaultCmd, transitKeyName s
 	return decrypted, nil
 }
 
+func (s SecretFileConfig) getFromVault(vault *VaultCmd) ([]byte, error) {
+	secrets, err := s.getMapFromVault(vault)
+	if err != nil {
+		return nil, err
+	}
+	out := map[string]map[string]map[string]string{
+		"secrets": secrets,
+	}
+
+	y := bytes.NewBuffer(nil)
+	if err := yaml.NewEncoder(y).Encode(out); err != nil {
+		return nil, err
+	}
+	return y.Bytes(), nil
+}
+
 func (s SecretFileConfig) getMapFromDisk(vault *VaultCmd, transitKeyName string) (map[string]map[string]string, error) {
 	raw, err := s.getDecryptedFromDisk(vault, transitKeyName)
 	if err != nil {
@@ -91,11 +107,10 @@ func (s SecretFileConfig) getMapFromDisk(vault *VaultCmd, transitKeyName string)
 	return parseSecretFileYaml(raw)
 }
 
-// saveToDiskFromVault writes encrypted secrets to disk from vault
-func (s SecretFileConfig) saveToDiskFromVault(vault *VaultCmd, transitKeyName string) error {
+func (s SecretFileConfig) getMapFromVault(vault *VaultCmd) (map[string]map[string]string, error) {
 	secretNames, err := vault.ListPath(kv2MetadataPath(s.vaultPath))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	secrets := map[string]map[string]string{}
@@ -103,31 +118,31 @@ func (s SecretFileConfig) saveToDiskFromVault(vault *VaultCmd, transitKeyName st
 		vaultPath := kv2DataPath(path.Join(s.vaultPath, name))
 		secret, err := vault.GetMap(vaultPath)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		secretStringMap := map[string]string{}
 		for k, v := range secret {
 			vString, ok := v.(string)
 			if !ok {
-				return fmt.Errorf("failed to parse secret: %v", secret)
+				return nil, fmt.Errorf("failed to parse secret: %v", secret)
 			}
 			secretStringMap[k] = vString
 		}
 
 		secrets[name] = secretStringMap
 	}
+	return secrets, nil
+}
 
-	out := map[string]map[string]map[string]string{
-		"secrets": secrets,
-	}
-
-	y := bytes.NewBuffer(nil)
-	if err := yaml.NewEncoder(y).Encode(out); err != nil {
+// saveToDiskFromVault writes encrypted secrets to disk from vault
+func (s SecretFileConfig) saveToDiskFromVault(vault *VaultCmd, transitKeyName string) error {
+	bytes, err := s.getFromVault(vault)
+	if err != nil {
 		return err
 	}
 
-	return encryptAndSaveToDisk(vault, transitKeyName, s.filePath, y.Bytes())
+	return encryptAndSaveToDisk(vault, transitKeyName, s.filePath, bytes)
 }
 
 // writeToVault writes a secret to Vault

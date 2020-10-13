@@ -8,6 +8,7 @@ type SecretConfig interface {
 	VaultPath() string
 	existsOnDisk() bool
 	getDecryptedFromDisk(vault *VaultCmd, transitKeyName string) ([]byte, error)
+	getFromVault(vault *VaultCmd) ([]byte, error)
 	saveToDisk(vault *VaultCmd, transitKeyName string, raw []byte) error
 	saveToDiskFromVault(vault *VaultCmd, transitKeyName string) error
 	writeToVault(vault *VaultCmd, transitKeyName string) error

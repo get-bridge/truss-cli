@@ -124,5 +124,13 @@ func TestSecretDirConfig(t *testing.T) {
 				So(string(bytes), ShouldNotResemble, secretYaml)
 			})
 		})
+
+		Convey("getFromVault", func() {
+			Convey("returns from vault", func() {
+				bytes, err := defaultConfig.getFromVault(vault)
+				So(err, ShouldBeNil)
+				So(string(bytes), ShouldResemble, secretYaml)
+			})
+		})
 	})
 }

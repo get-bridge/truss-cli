@@ -161,5 +161,13 @@ func TestSecretFileConfig(t *testing.T) {
 				So(string(decrypted), ShouldEqual, fileContent)
 			})
 		})
+
+		Convey("getFromVault", func() {
+			Convey("returns from vault", func() {
+				bytes, err := defaultConfig.getFromVault(vault)
+				So(err, ShouldBeNil)
+				So(string(bytes), ShouldResemble, fileContent)
+			})
+		})
 	})
 }

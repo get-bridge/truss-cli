@@ -1,7 +1,6 @@
 package truss
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -171,22 +170,22 @@ func (m SecretsManager) Vault(secret SecretConfig) (*VaultCmd, error) {
 }
 
 // View Secret
-func (m SecretsManager) View(secret SecretConfig) (string, error) {
-	if !secret.existsOnDisk() {
-		return "", errors.New("no such local secrets file exists. try running truss secrets pull")
-	}
-
+func (m SecretsManager) View(secret SecretConfig) (localContent string, remoteContent string, err error) {
 	vault, err := m.Vault(secret)
 	if err != nil {
-		return "", err
+		return
 	}
 
-	out, err := secret.getDecryptedFromDisk(vault, m.TransitKeyName)
+	local, err := secret.getDecryptedFromDisk(vault, m.TransitKeyName)
 	if err != nil {
-		return "", err
+		return
+	}
+	remote, err := secret.getFromVault(vault)
+	if err != nil {
+		return
 	}
 
-	return string(out), nil
+	return string(local), string(remote), nil
 }
 
 // EncryptSecret on disk with cypher text from vault
