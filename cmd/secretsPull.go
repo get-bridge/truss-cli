@@ -40,7 +40,7 @@ var secretsPullCmd = &cobra.Command{
 }
 
 func pullSecret(sm *truss.SecretsManager, secret truss.SecretConfig) error {
-	areSame, err := secretCompare(sm, secret)
+	areSame, err := secretCompare(sm, secret, false)
 	if err != nil {
 		return err
 	}
