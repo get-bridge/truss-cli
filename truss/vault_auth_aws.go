@@ -11,13 +11,15 @@ import (
 type vaultAuthAWS struct {
 	vaultRole string
 	awsRole   string
+	awsRegion string
 }
 
 // VaultAuthAWS vault auth
-func VaultAuthAWS(vaultRole, awsRole string) VaultAuth {
+func VaultAuthAWS(vaultRole, awsRole, awsRegion string) VaultAuth {
 	return &vaultAuthAWS{
 		vaultRole: vaultRole,
 		awsRole:   awsRole,
+		awsRegion: awsRegion,
 	}
 }
 
@@ -34,7 +36,7 @@ func (auth *vaultAuthAWS) LoadCreds() (interface{}, error) {
 		return nil, err
 	}
 
-	return awsauth.GenerateLoginData(creds, "", "")
+	return awsauth.GenerateLoginData(creds, "", auth.awsRegion)
 }
 
 // Login for VaultAuth interface
