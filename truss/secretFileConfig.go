@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 
 	"gopkg.in/yaml.v2"
 )
@@ -74,9 +75,11 @@ func (s SecretFileConfig) getDecryptedFromDisk(vault *VaultCmd, transitKeyName s
 	}
 
 	decrypted, err := vault.Decrypt(transitKeyName, encrypted)
-	if err != nil {
+	if err != nil && strings.Contains(err.Error(), "invalid ciphertext") {
 		// if we fail to decrypt, might not be encypted
 		return encrypted, nil
+	} else if err != nil {
+		return nil, err
 	}
 
 	return decrypted, nil

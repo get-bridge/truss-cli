@@ -31,15 +31,18 @@ As it will port-forward to the service and call aws auth`,
 func getVaultAuth() truss.VaultAuth {
 	vaultRole := viper.GetString("vault.auth.aws.vaultrole")
 	awsRole := viper.GetString("vault.auth.aws.awsrole")
+	awsRegion := viper.GetString("vault.auth.aws.awsregion")
 
 	if vaultRole == "" || awsRole == "" {
 		return nil
 	}
 
-	return truss.VaultAuthAWS(vaultRole, awsRole)
+	return truss.VaultAuthAWS(vaultRole, awsRole, awsRegion)
 }
 
 func init() {
 	rootCmd.AddCommand(vaultCmd)
 	vaultCmd.Flags().SetInterspersed(false)
+
+	viper.SetDefault("vault.auth.aws.awsregion", "us-east-1")
 }

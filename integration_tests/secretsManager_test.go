@@ -40,7 +40,7 @@ secrets:
 		awsrole, ok := os.LookupEnv("TEST_AWS_ROLE")
 		if ok {
 			vaultrole := os.Getenv("TEST_VAULT_ROLE")
-			auth = truss.VaultAuthAWS(vaultrole, awsrole)
+			auth = truss.VaultAuthAWS(vaultrole, awsrole, "us-east-1")
 		}
 		sm, err := truss.NewSecretsManager(secretsPath, "", auth)
 		So(err, ShouldBeNil)
