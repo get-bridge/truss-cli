@@ -35,14 +35,14 @@ brews:
     homepage: https://github.com/instructure-bridge/truss-cli
     github:
       owner: instructure-bridge
-      name: homebrew-truss-cli
+      name: homebrew-tap
     folder: Formula
     dependencies:
       - name: kubectl
       - name: vault
       - name: sshuttle
     test: |
-      system bin/"truss", "help"
+      system "bin/truss", "help"
     install: |
       system "cp", "truss-cli", "truss"
       bin.install "truss"
