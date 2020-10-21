@@ -29,3 +29,4 @@ secrets.yaml
 
 # vscode
 .vscode/
+.truss/

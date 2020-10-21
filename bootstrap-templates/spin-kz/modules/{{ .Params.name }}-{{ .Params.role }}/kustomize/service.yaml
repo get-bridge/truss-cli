@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Params.name }}-{{ .Params.role }}
+  labels: {} # populated by Kustomize
+  annotations:
+    moniker.spinnaker.io/application: {{ .Params.name }}
+    moniker.spinnaker.io/cluster: service {{ .Params.name }}-{{ .Params.role }}
+spec:
+  selector:
+    service-role: "{{ .Params.role }}"
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: {{ .Params.httpPort }}

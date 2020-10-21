@@ -1,0 +1,24 @@
+namespace: "{{ .Params.name }}-prod"
+bases:
+  - ../../../modules/{{ .Params.name }}-{{ .Params.role }}/kustomize/deployment
+
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: {{ .Params.name }}-{{ .Params.role }}
+      labels:
+        version: "${trigger['parentExecution']['trigger']['parameters']['sha']}"
+    spec:
+      template:
+        metadata:
+          labels:
+            version: "${trigger['parentExecution']['trigger']['parameters']['sha']}"
+          annotations:
+            vault.security.banzaicloud.io/vault-role: {{ .Params.name }}-prod-{{ .Params.role }}
+        spec:
+          serviceAccountName: {{ .Params.name }}-prod-{{ .Params.role }}
+          containers:
+            - name: "{{ .Params.name }}-{{ .Params.role }}"
+              image: "{{ .Params.image }}:${trigger['parentExecution']['trigger']['parameters']['sha']}"
