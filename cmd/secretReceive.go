@@ -3,15 +3,15 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/atotto/clipboard"
 	"github.com/instructure-bridge/truss-cli/truss"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-var pbpasteCmd = &cobra.Command{
-	Use:   "pbpaste {token}",
-	Short: "Unwrapps a shared secret",
+var secretReceiveCmd = &cobra.Command{
+	Use:   "receive {token}",
+	Short: "Receives a shared secret by unwrapping a Vault Wrapped Token",
+	Long:  secretShareCmd.Long,
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		viper.Set("TRUSS_ENV", "edge-cmh")
@@ -29,12 +29,11 @@ var pbpasteCmd = &cobra.Command{
 			return err
 		}
 
-		copy := fmt.Sprintf("\"%s\" has been copied to your clipboard!", output)
-		fmt.Println(copy)
-		return clipboard.WriteAll(copy)
+		fmt.Print(string(output))
+		return nil
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(pbpasteCmd)
+	secretsCmd.AddCommand(secretReceiveCmd)
 }
