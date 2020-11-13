@@ -14,8 +14,9 @@ import (
 )
 
 var secretsCmd = &cobra.Command{
-	Use:   "secrets",
-	Short: "Manages synchronizing secrets between Vault and the filesystem",
+	Use:     "secrets",
+	Aliases: []string{"secret"},
+	Short:   "Manages synchronizing secrets between Vault and the filesystem",
 }
 
 var defaultSecretsFileName = "secrets.yaml"
