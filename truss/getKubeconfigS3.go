@@ -52,7 +52,9 @@ func (config *GetKubeconfigS3Cmd) Fetch() error {
 
 	downloader := s3manager.NewDownloader(sess)
 	for _, key := range objects.Contents {
-
+		if err := os.MkdirAll(config.dest, 0755); err != nil && !os.IsExist(err) {
+			return err
+		}
 		file, err := os.Create(path.Join(config.dest, *key.Key))
 		if err != nil {
 			return err
