@@ -1,10 +1,13 @@
 package truss
 
 import (
+	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -30,7 +33,12 @@ func GetGlobalConfigS3(input *GetGlobalConfigS3Input) (string, error) {
 	}
 
 	dir := input.Dir
-	file, err := os.Create(path.Join(dir, ".truss.yaml"))
+	fileName := path.Join(dir, ".truss.yaml")
+
+	//store existing content
+	oldContent, readFileErr := ioutil.ReadFile(fileName)
+
+	file, err := os.Create(fileName)
 	if err != nil {
 		return "", err
 	}
@@ -43,5 +51,12 @@ func GetGlobalConfigS3(input *GetGlobalConfigS3Input) (string, error) {
 			Key:    &input.Key,
 		})
 
+	// if access to s3 throws an error but we had existing content, restore it
+	if err != nil && readFileErr == nil {
+		ioutil.WriteFile(fileName, oldContent, os.ModeAppend.Perm())
+	}
+	if err != nil && err.(awserr.Error).Code() == "NoCredentialProviders" {
+		fmt.Println("It seems that you forgot to configure aws access")
+	}
 	return file.Name(), err
 }
