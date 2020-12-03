@@ -35,13 +35,9 @@ vault:
 
 ## Install
 
-### Mac Homebrew
+### Mac / Linux Homebrew
 
-Grab yourself a [personal access token](https://github.com/settings/tokens/new?scopes=repo&description=Homebrew%20for%20Bridge%20VPN%20CLI). Then...
-
-```sh
-brew install instructure-bridge/truss-cli/truss-cli
-```
+We use a own tap, take a look at [Bridge Homebrew Tap] (https://github.com/instructure-bridge/homebrew-tap) to see on how to use it.
 
 ### GO
 
