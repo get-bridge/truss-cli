@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/instructure-bridge/truss-cli/truss"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -18,7 +20,12 @@ dependencies:
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		dependencies := viper.GetStringSlice("dependencies")
-		return truss.Setup(&dependencies)
+
+		err := truss.Setup(&dependencies)
+		if err == nil {
+			fmt.Println("No problems detected")
+		}
+		return err
 	},
 }
 
