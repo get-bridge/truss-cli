@@ -25,15 +25,18 @@ kubeconfigfiles:
 		}
 
 		s3bucket := viper.GetString("kubeconfigfiles.s3.bucket")
-		if s3bucket != "" {
-			awsrole := viper.GetString("kubeconfigfiles.s3.awsrole")
-			region := viper.GetString("kubeconfigfiles.s3.region")
-			if region == "" {
-				return errors.New("s3 config must have region")
+		if s3bucket == "" {
+			if viper.ConfigFileUsed() == "" {
+				return errors.New("No global config file found")
 			}
-			return truss.GetKubeconfigS3(awsrole, s3bucket, dest, region).Fetch()
+			return errors.New(viper.ConfigFileUsed() + " does not contain a valid 'kubeconfigfiles'")
 		}
-		return nil
+		awsrole := viper.GetString("kubeconfigfiles.s3.awsrole")
+		region := viper.GetString("kubeconfigfiles.s3.region")
+		if region == "" {
+			return errors.New("s3 config must have region")
+		}
+		return truss.GetKubeconfigS3(awsrole, s3bucket, dest, region).Fetch()
 	},
 }
 

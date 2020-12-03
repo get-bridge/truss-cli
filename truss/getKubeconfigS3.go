@@ -33,7 +33,7 @@ func GetKubeconfigS3(awsRole string, bucket string, dest string, region string) 
 
 // Fetch kubeconfigs
 func (config *GetKubeconfigS3Cmd) Fetch() error {
-	log.Infoln("Fetching kubeconfig from s3")
+	log.Infoln("Fetching kubeconfig from s3 to " + config.dest)
 
 	sess, _ := session.NewSession(&aws.Config{
 		Region: aws.String(config.region)},
