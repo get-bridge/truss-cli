@@ -33,7 +33,7 @@ brews:
     name: truss-cli
     description: CLI to help manage many k8s clusters
     homepage: https://github.com/instructure-bridge/truss-cli
-    github:
+    tap:
       owner: instructure-bridge
       name: homebrew-tap
     folder: Formula
