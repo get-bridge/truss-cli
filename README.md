@@ -37,7 +37,7 @@ vault:
 
 ### Mac / Linux Homebrew
 
-We use a own tap, take a look at [Bridge Homebrew Tap] (https://github.com/instructure-bridge/homebrew-tap) to see on how to use it.
+We use a own tap, take a look at [Bridge Homebrew Tap](https://github.com/instructure-bridge/homebrew-tap) to see on how to use it.
 
 ### GO
 
