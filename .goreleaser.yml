@@ -39,7 +39,7 @@ brews:
     folder: Formula
     dependencies:
       - name: kubectl
-      - name: vault
+      - name: hashicorp/tap/vault
       - name: sshuttle
     test: |
       system "bin/truss", "help"
