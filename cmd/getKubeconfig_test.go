@@ -15,7 +15,8 @@ func TestGetKubeconfig(t *testing.T) {
 
 		Convey("runs no errors", func() {
 			err := getKubeconfigCmd.RunE(c, []string{})
-			So(err, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "No global config file found")
 		})
 
 		Convey("s3 configured", func() {
