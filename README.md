@@ -111,7 +111,7 @@ updates to the template. For now, it's one-and-done!
 
 The `truss secrets` command makes it easier to manage secrets in git, and
 synchronize them across multiple Truss Vault servers. Start by creating a
-`secrets.yaml` file.
+`secrets.yaml` file or running `truss secrets init`
 
 ```yaml
 # secrets.yaml
