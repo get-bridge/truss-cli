@@ -24,32 +24,35 @@ var secretsInitCmd = &cobra.Command{
 		fileName := prompter.Prompt("File name", "secrets.yaml")
 
 		environments := viper.GetStringMapString("environments")
-		envSecrets := ""
-		for e, kubeconfig := range environments {
-			path := strings.ReplaceAll(e, "-", "/")
-			envSecrets = envSecrets + fmt.Sprintf(`- name: %s
-  kubeconfig: %s
-  vaultPath: %s/%s/%s
-  filePath: %s/%s/%s
-`,
-				e,
-				kubeconfig,
-				envSecretsPath, path, envSecretFileName,
-				vaultPath, path, service,
-			)
-		}
 
-		fileData := fmt.Sprintf(`# %s
-transit-key-name: %s
-
-secrets:
-%s
-`, fileName, service, envSecrets)
-
+		fileData := generateSecretsFile(environments, service, envSecretsPath, envSecretFileName, vaultPath, fileName)
 		return ioutil.WriteFile(fileName, []byte(fileData), 0644)
 	},
 }
 
 func init() {
 	secretsCmd.AddCommand(secretsInitCmd)
+}
+
+func generateSecretsFile(environments map[string]string, service, envSecretsPath, envSecretFileName, vaultPath, fileName string) string {
+	envSecrets := ""
+	for e, kubeconfig := range environments {
+		path := strings.ReplaceAll(e, "-", "/")
+		envSecrets = envSecrets + fmt.Sprintf(`- name: %s
+  kubeconfig: %s
+  vaultPath: %s/%s/%s
+  filePath: %s/%s/%s
+`,
+			e,
+			kubeconfig,
+			envSecretsPath, path, envSecretFileName,
+			vaultPath, path, service,
+		)
+	}
+
+	return fmt.Sprintf(`# %s
+transit-key-name: %s
+
+secrets:
+%s`, fileName, service, envSecrets)
 }
