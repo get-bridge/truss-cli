@@ -108,6 +108,10 @@ func buildShellKubectlArgs(podName string, image string, istioEnabled bool, serv
 	// Adding a label so we can easily find and clean these up later
 	kubectlArgs = append(kubectlArgs, "--labels=truss.bridgeops.sh/shell=true")
 
+	if istioEnabled {
+		kubectlArgs = append(kubectlArgs, "--env=ISTIO_ENABLED=true")
+	}
+
 	// Here we are overriding the following in the Pod spec:
 	//   * name/generateName to give the pod a unique name
 	//   * annotations to enable/disable Istio injection
