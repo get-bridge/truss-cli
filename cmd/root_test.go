@@ -29,7 +29,7 @@ func TestExecute(t *testing.T) {
 			cmd.Env = append(os.Environ(), "RUN_EXECUTE=1")
 			err := cmd.Run()
 			if e, ok := err.(*exec.ExitError); ok && !e.Success() {
-				So(stderr.String(), ShouldContainSubstring, "Error: unknown command \"foo\" for \"truss-cli\"")
+				So(stderr.String(), ShouldContainSubstring, "Error: unknown command \"foo\" for \"truss\"")
 				return
 			}
 			t.Fatalf("process ran with err %v, want exit status 1", err)
@@ -49,7 +49,7 @@ func TestRootCommand(t *testing.T) {
 			rootCmd.SetArgs([]string{"foo"})
 			err := rootCmd.Execute()
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "unknown command \"foo\" for \"truss-cli\"")
+			So(err.Error(), ShouldContainSubstring, "unknown command \"foo\" for \"truss\"")
 		})
 	})
 }
