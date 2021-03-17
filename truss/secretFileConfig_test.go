@@ -1,11 +1,13 @@
 package truss
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
+	"gopkg.in/yaml.v2"
 )
 
 func TestSecretFileConfig(t *testing.T) {
@@ -31,14 +33,24 @@ func TestSecretFileConfig(t *testing.T) {
 		}
 		f, err := ioutil.TempFile("", "")
 		So(err, ShouldBeNil)
+		bf, err := ioutil.TempFile("", "")
+		So(err, ShouldBeNil)
 		defer func() {
 			f.Close()
+			bf.Close()
 			os.Remove(f.Name())
+			os.Remove(bf.Name())
 		}()
 
-		defaultConfig := SecretFileConfig{filePath: f.Name(), vaultPath: "kv/file/config"}
+		blobConfig := SecretFileConfig{filePath: bf.Name(), vaultPath: "kv/file/config"}
 		err = encryptAndSaveToDisk(vault, transitKey, f.Name(), []byte(fileContent))
 		So(err, ShouldBeNil)
+
+		defaultConfig := SecretFileConfig{filePath: f.Name(), vaultPath: "kv/file/config"}
+		ot, err := NewObfuscationTarget(bytes.NewReader([]byte(fileContent)))
+		So(err, ShouldBeNil)
+		So(ot.Encrypt(vault, transitKey), ShouldBeNil)
+		So(defaultConfig.saveToDisk(vault, transitKey, ot.Bytes()), ShouldBeNil)
 
 		Convey("existsOnDisk", func() {
 			Convey("true if file exists", func() {
@@ -58,8 +70,16 @@ func TestSecretFileConfig(t *testing.T) {
 		})
 
 		Convey("getDecryptedFromDisk", func() {
+			// reads encrypted blobs
+			// reads key-encrypted yaml
+			// returns decrypted content
+
 			Convey("returns contents", func() {
 				bytes, err := defaultConfig.getDecryptedFromDisk(vault, transitKey)
+				So(err, ShouldBeNil)
+				So(string(bytes), ShouldEqual, fileContent)
+
+				bytes, err = blobConfig.getDecryptedFromDisk(vault, transitKey)
 				So(err, ShouldBeNil)
 				So(string(bytes), ShouldEqual, fileContent)
 			})
@@ -98,12 +118,15 @@ func TestSecretFileConfig(t *testing.T) {
 				err = config.saveToDiskFromVault(vault, transitKey)
 				So(err, ShouldBeNil)
 
-				bytes, err := ioutil.ReadFile(newFile.Name())
+				b, err := ioutil.ReadFile(newFile.Name())
 				So(err, ShouldBeNil)
 
-				decrypted, err := vault.Decrypt(transitKey, bytes)
+				ot, err := NewObfuscationTarget(bytes.NewReader(b))
 				So(err, ShouldBeNil)
-				So(string(decrypted), ShouldEqual, fileContent)
+				So(ot.Decrypt(vault, transitKey), ShouldBeNil)
+				decrypted := bytes.NewBuffer(nil)
+				So(yaml.NewEncoder(decrypted).Encode(ot), ShouldBeNil)
+				So(decrypted.String(), ShouldEqual, fileContent)
 			})
 		})
 
@@ -153,12 +176,16 @@ func TestSecretFileConfig(t *testing.T) {
 				err = SecretFileConfig{filePath: newFile.Name()}.saveToDisk(vault, transitKey, []byte(fileContent))
 				So(err, ShouldBeNil)
 
-				bytes, err := ioutil.ReadFile(newFile.Name())
+				b, err := ioutil.ReadFile(newFile.Name())
 				So(err, ShouldBeNil)
 
-				decrypted, err := vault.Decrypt(transitKey, bytes)
+				ot, err := NewObfuscationTarget(bytes.NewReader(b))
 				So(err, ShouldBeNil)
-				So(string(decrypted), ShouldEqual, fileContent)
+				So(ot.Decrypt(vault, transitKey), ShouldBeNil)
+
+				decrypted := bytes.NewBuffer(nil)
+				So(yaml.NewEncoder(decrypted).Encode(ot), ShouldBeNil)
+				So(decrypted.String(), ShouldEqual, fileContent)
 			})
 		})
 

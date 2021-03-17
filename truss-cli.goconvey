@@ -1,0 +1,1 @@
+-excludedDirs .github,.truss,.vscode,bootstrap-templates,dist,integration_tests,secrets,terraform

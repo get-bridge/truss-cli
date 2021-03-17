@@ -4,9 +4,9 @@ go 1.14
 
 require (
 	github.com/Songmu/prompter v0.3.0
-	github.com/atotto/clipboard v0.1.2
 	github.com/aws/aws-sdk-go v1.34.29
 	github.com/creasty/defaults v1.5.0
+	github.com/davecgh/go-spew v1.1.1
 	github.com/go-git/go-git/v5 v5.1.0
 	github.com/hashicorp/vault v1.2.1-0.20200916223652-9510adcb9ad1
 	github.com/hashicorp/vault-plugin-auth-gcp v0.7.1-0.20200824223748-9b39891cb353 // indirect
@@ -15,6 +15,7 @@ require (
 	github.com/hashicorp/vault/api v1.0.5-0.20200717191844-f687267c8086
 	github.com/hashicorp/vault/sdk v0.1.14-0.20200916223652-9510adcb9ad1
 	github.com/iancoleman/strcase v0.1.2
+	github.com/jeremywohl/flatten v1.0.1
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/pkg/errors v0.9.1

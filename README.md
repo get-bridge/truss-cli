@@ -194,13 +194,19 @@ source .envrc
 Run all tests:
 
 ```sh
-go test go test ./...
+go test ./...
 ```
 
 Run a specific test using the `-run` flag and a regex for the test name:
 
+```sh
+go test ./... -run ^TestWrap$
 ```
-go test go test ./... -run ^TestWrap$
+
+Or get fancy:
+
+```sh
+goconvey
 ```
 
 [1]: https://github.com/spf13/cobra#installing

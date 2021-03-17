@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"strings"
 
 	"gopkg.in/yaml.v2"
 )
@@ -74,15 +73,19 @@ func (s SecretFileConfig) getDecryptedFromDisk(vault *VaultCmd, transitKeyName s
 		return nil, err
 	}
 
-	decrypted, err := vault.Decrypt(transitKeyName, encrypted)
-	if err != nil && strings.Contains(err.Error(), "invalid ciphertext") {
-		// if we fail to decrypt, might not be encypted
-		return encrypted, nil
-	} else if err != nil {
+	ot, err := NewObfuscationTarget(bytes.NewReader(encrypted))
+	if err != nil {
+		// It's possibly a fully-encrypted file. Try to decrypt the whole thing?
+		return vault.Decrypt(transitKeyName, encrypted)
+	}
+
+	if err := ot.Decrypt(vault, transitKeyName); err != nil {
 		return nil, err
 	}
 
-	return decrypted, nil
+	out := bytes.NewBuffer(nil)
+	yaml.NewEncoder(out).Encode(ot)
+	return out.Bytes(), nil
 }
 
 func (s SecretFileConfig) getFromVault(vault *VaultCmd) ([]byte, error) {
@@ -140,12 +143,12 @@ func (s SecretFileConfig) getMapFromVault(vault *VaultCmd) (map[string]map[strin
 
 // saveToDiskFromVault writes encrypted secrets to disk from vault
 func (s SecretFileConfig) saveToDiskFromVault(vault *VaultCmd, transitKeyName string) error {
-	bytes, err := s.getFromVault(vault)
+	v, err := s.getFromVault(vault)
 	if err != nil {
 		return err
 	}
 
-	return encryptAndSaveToDisk(vault, transitKeyName, s.filePath, bytes)
+	return s.saveToDisk(vault, transitKeyName, v)
 }
 
 // writeToVault writes a secret to Vault
@@ -169,12 +172,26 @@ func (s SecretFileConfig) writeToVault(vault *VaultCmd, transitKeyName string) e
 }
 
 func (s SecretFileConfig) saveToDisk(vault *VaultCmd, transitKeyName string, raw []byte) error {
-	// validate valid yaml
-	if _, err := parseSecretFileYaml(raw); err != nil {
+	ot, err := NewObfuscationTarget(bytes.NewReader(raw))
+	if err != nil {
 		return err
 	}
 
-	return encryptAndSaveToDisk(vault, transitKeyName, s.filePath, raw)
+	if err := ot.Encrypt(vault, transitKeyName); err != nil {
+		return err
+	}
+
+	// ensure dir exists
+	if err := os.MkdirAll(path.Dir(s.filePath), 0744); err != nil {
+		return err
+	}
+	f, err := os.Create(s.filePath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	return yaml.NewEncoder(f).Encode(ot)
 }
 
 func parseSecretFileYaml(raw []byte) (map[string]map[string]string, error) {
