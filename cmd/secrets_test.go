@@ -7,7 +7,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/instructure-bridge/truss-cli/truss"
+	"github.com/get-bridge/truss-cli/truss"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/spf13/viper"
 )

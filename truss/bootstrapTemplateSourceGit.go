@@ -12,7 +12,7 @@ import (
 // GitTemplateSource is a Local Filesystem Template Source
 type GitTemplateSource struct {
 	TemplateSource
-	CloneURL    string `default:"git@github.com:instructure-bridge/truss-cli.git" yaml:"clone_url"`
+	CloneURL    string `default:"git@github.com:get-bridge/truss-cli.git" yaml:"clone_url"`
 	Directory   string `default:"bootstrap-templates"`
 	CheckoutRef string `yaml:"checkout_ref"`
 	tmpDir      string

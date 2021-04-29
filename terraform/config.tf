@@ -19,5 +19,5 @@ provider "aws" {
 }
 
 provider "github" {
-  organization = "instructure-bridge"
+  organization = "get-bridge"
 }

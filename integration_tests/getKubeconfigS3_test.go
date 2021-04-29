@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/instructure-bridge/truss-cli/truss"
+	"github.com/get-bridge/truss-cli/truss"
 	. "github.com/smartystreets/goconvey/convey"
 )
 

@@ -6,7 +6,7 @@ builds:
 - env:
   - CGO_ENABLED=0
   ldflags:
-    - -X github.com/instructure-bridge/truss-cli/cmd.Version={{.Version}}
+    - -X github.com/get-bridge/truss-cli/cmd.Version={{.Version}}
   binary: truss
 archives:
 - replacements:
@@ -29,9 +29,9 @@ brews:
   -
     name: truss-cli
     description: CLI to help manage many k8s clusters
-    homepage: https://github.com/instructure-bridge/truss-cli
+    homepage: https://github.com/get-bridge/truss-cli
     tap:
-      owner: instructure-bridge
+      owner: get-bridge
       name: homebrew-tap
     folder: Formula
     dependencies:

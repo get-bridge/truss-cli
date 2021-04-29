@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/instructure-bridge/truss-cli/truss"
+	"github.com/get-bridge/truss-cli/truss"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

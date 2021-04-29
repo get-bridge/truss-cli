@@ -22,7 +22,7 @@ type BootstrapConfig struct {
 			Role   string `default:"arn:aws:iam::127178877223:role/xacct/ops-admin"`
 		}
 		Git struct {
-			CloneURL    string `default:"git@github.com:instructure-bridge/truss-cli.git" yaml:"clone_url"`
+			CloneURL    string `default:"git@github.com:get-bridge/truss-cli.git" yaml:"clone_url"`
 			Directory   string `default:"bootstrap-templates"`
 			CheckoutRef string `yaml:"checkout_ref"`
 		}

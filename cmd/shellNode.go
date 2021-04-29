@@ -22,7 +22,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2instanceconnect"
 
-	"github.com/instructure-bridge/truss-cli/truss"
+	"github.com/get-bridge/truss-cli/truss"
 )
 
 var shellNodeCmd = &cobra.Command{
