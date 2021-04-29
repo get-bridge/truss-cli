@@ -1,4 +1,4 @@
-module github.com/instructure-bridge/truss-cli
+module github.com/get-bridge/truss-cli
 
 go 1.14
 

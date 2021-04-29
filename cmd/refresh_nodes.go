@@ -6,7 +6,7 @@ import (
 
 	"github.com/Songmu/prompter"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
-	"github.com/instructure-bridge/truss-cli/truss"
+	"github.com/get-bridge/truss-cli/truss"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

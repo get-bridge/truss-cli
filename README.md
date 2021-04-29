@@ -40,13 +40,13 @@ vault:
 Grab yourself a [personal access token](https://github.com/settings/tokens/new?scopes=repo&description=Homebrew%20for%20Bridge%20VPN%20CLI). Then...
 
 ```sh
-brew install instructure-bridge/truss-cli/truss-cli
+brew install get-bridge/truss-cli/truss-cli
 ```
 
 ### GO
 
 ```sh
-go get github.com/instructure-bridge/truss-cli truss
+go get github.com/get-bridge/truss-cli truss
 ```
 
 ## Usage
@@ -73,7 +73,7 @@ templateSource:
     prefix: bootstrap-templates
     role: arn:aws:iam::127178877223:role/xacct/ops-admin
   git:
-    clone_url: git@github.com:instructure-bridge/truss-cli.git
+    clone_url: git@github.com:get-bridge/truss-cli.git
     directory: bootstrap-templates
     checkout_ref: refs/heads/master
 
