@@ -81,6 +81,10 @@ func TestConfig(t *testing.T) {
 		})
 
 		Convey("parses cluster role arn", func() {
+			viper.Set("aws", map[string]string{
+				"assumerole": "arn:aws:iam::127178877223:role/xacct/ops-admin",
+			})
+
 			So(must(envClusterRoleArn()), ShouldEqual, "arn:aws:iam::127178877223:role/xacct/ops-admin")
 		})
 	})
