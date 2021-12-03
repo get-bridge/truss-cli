@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path"
+	"strings"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
@@ -78,15 +79,50 @@ func must(s string, err error) string {
 }
 
 func envClusterName() (string, error) {
-	return getAuthInfoArg("cluster-name")
+	kubeconfigName, err := getKubeconfigName()
+
+	if err != nil {
+		return "", err
+	}
+
+	parts := strings.Split(kubeconfigName, "-")
+	env := parts[len(parts)-2]
+	region := parts[len(parts)-1]
+
+	return fmt.Sprintf("truss-%s-%s-shared-cluster", env, region), nil
 }
 
 func envClusterRegion() (string, error) {
-	return getAuthInfoArg("region")
+	kubeconfigName, err := getKubeconfigName()
+
+	if err != nil {
+		return "", err
+	}
+
+	parts := strings.Split(kubeconfigName, "-")
+	region := parts[len(parts)-1]
+
+	awsRegion := ""
+
+	switch region {
+	case "cmh":
+		awsRegion = "us-east-2"
+	case "dub":
+		awsRegion = "eu-west-1"
+	case "iad":
+		awsRegion = "us-east-1"
+	case "syd":
+		awsRegion = "ap-southeast-2"
+	default:
+		err = fmt.Errorf("Unable to match region %s to AWS region", region)
+	}
+
+	return awsRegion, err
 }
 
 func envClusterRoleArn() (string, error) {
-	return getAuthInfoArg("role")
+	aws := viper.GetStringMapString("aws")
+	return aws["assumerole"], nil
 }
 
 func getAuthInfoArg(arg string) (string, error) {
