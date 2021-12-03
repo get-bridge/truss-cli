@@ -13,8 +13,8 @@ type RefreshNodesCmd struct {
 }
 
 // NewRefreshNodesCmd instantiates a RefreshNodesCmd
-func NewRefreshNodesCmd(role, arn string) *RefreshNodesCmd {
-	sess := NewAWSSession(role, arn)
+func NewRefreshNodesCmd(region, arn string) *RefreshNodesCmd {
+	sess := NewAWSSession(region, arn)
 	asc := autoscaling.New(sess)
 
 	return &RefreshNodesCmd{
