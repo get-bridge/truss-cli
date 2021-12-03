@@ -25,6 +25,6 @@ module "deploy-pipeline" {
 
   trigger_jenkins_job = "{{ .Params.trigger_jenkins_job }}"
 
-  # slack_channel      = "#bridge_noisy"
+  # slack_channel      = "#bridge-noisy"
   enable_manual_gate = var.app_env == "prod"
 }
