@@ -39,7 +39,7 @@ func TestEnv(t *testing.T) {
 
 			cmd := rootCmd
 			buff := bytes.NewBufferString("")
-			cmd.SetOut(buff)
+			cmd.SetErr(buff)
 			cmd.SetArgs([]string{
 				"env",
 				"-e",

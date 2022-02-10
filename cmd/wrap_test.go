@@ -22,7 +22,7 @@ func TestWrap(t *testing.T) {
 			cmd := rootCmd
 			viper.BindPFlag("TRUSS_ENV", cmd.PersistentFlags().Lookup("env"))
 			buff := bytes.NewBufferString("")
-			cmd.SetOut(buff)
+			cmd.SetErr(buff)
 			cmd.SetArgs([]string{
 				"wrap",
 				"-e",

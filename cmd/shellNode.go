@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -162,7 +163,7 @@ func describeKubernetesNode(nodeName string) (*v1.Node, error) {
 		return nil, err
 	}
 
-	return clientset.CoreV1().Nodes().Get(nodeName, metav1.GetOptions{})
+	return clientset.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
 }
 
 func describeInstance(instanceID string, sess *session.Session) (*ec2.Instance, error) {
