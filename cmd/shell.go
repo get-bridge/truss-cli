@@ -16,12 +16,17 @@ import (
 type shellPodOverrides struct {
 	APIVersion string           `json:"apiVersion"`
 	Metadata   shellPodMetadata `json:"metadata"`
+	Spec       shellPodSpec     `json:"spec"`
 }
 
 type shellPodMetadata struct {
 	Annotations  map[string]string `json:"annotations"`
 	GenerateName string            `json:"generateName"`
 	Name         string            `json:"name"`
+}
+
+type shellPodSpec struct {
+	ServiceAccountName string `json:"serviceAccountName"`
 }
 
 // shellCmd represents the shell command
@@ -123,6 +128,10 @@ func buildShellKubectlArgs(podName string, image string, istioEnabled bool, serv
 		"sidecar.istio.io/inject": strconv.FormatBool(istioEnabled),
 	}
 
+	if serviceaccount != "" {
+		overrides.Spec.ServiceAccountName = serviceaccount
+	}
+
 	overridesJSON, err := json.Marshal(overrides)
 	if err != nil {
 		return kubectlArgs, err
@@ -130,10 +139,6 @@ func buildShellKubectlArgs(podName string, image string, istioEnabled bool, serv
 
 	if namespace != "" {
 		kubectlArgs = append(kubectlArgs, "--namespace="+namespace)
-	}
-
-	if serviceaccount != "" {
-		kubectlArgs = append(kubectlArgs, "--serviceaccount="+serviceaccount)
 	}
 
 	kubectlArgs = append(kubectlArgs, "--overrides="+string(overridesJSON))
