@@ -132,18 +132,16 @@ func execSSHCommand(hostname string, username string, jump string, sshCmd []stri
 }
 
 func getJump() (string, error) {
-	kubeconfigName, err := getKubeconfigName()
-	if err != nil {
-		return "", err
+	env := viper.GetString("TRUSS_ENV")
+	if env == "" {
+		return "", nil
 	}
 
-	clusterEnv := strings.Replace(kubeconfigName, "kubeconfig-truss-", "", 1)
-
-	jump := viper.GetString("jumps." + clusterEnv)
+	jumps := viper.GetStringMapString("jumps")
+	jump := jumps[env]
 	if jump == "" {
-		return "", errors.New("Could not find jump for " + clusterEnv)
+		return "", fmt.Errorf("unknown env %v", env)
 	}
-
 	return jump, nil
 }
 
