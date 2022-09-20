@@ -108,7 +108,7 @@ Examples:
 }
 
 func buildShellKubectlArgs(podName string, image string, istioEnabled bool, serviceaccount string, namespace string, cmdArgs []string) ([]string, error) {
-	kubectlArgs := []string{"kubectl", "run", podName, "--image-pull-policy=Always", "--restart=Never", "--rm", "--stdin", "--tty", "--wait", "--image=" + image}
+	kubectlArgs := []string{"kubectl", "run", podName, "--image-pull-policy=Always", "--restart=Never", "--rm", "--stdin", "--tty", "--attach=true", "--image=" + image}
 
 	// Adding a label so we can easily find and clean these up later
 	kubectlArgs = append(kubectlArgs, "--labels=truss.bridgeops.sh/shell=true")
