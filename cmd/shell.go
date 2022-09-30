@@ -157,7 +157,7 @@ func init() {
 	shellCmd.Flags().StringP("image", "i", "jdharrington/toolbox:latest", "The Docker image to use")
 	shellCmd.Flags().StringP("namespace", "n", "", "Namespace to run the shell Pod in")
 	shellCmd.Flags().StringP("serviceaccount", "s", "", "ServiceAccount to run the shell Pod as")
-	shellCmd.Flags().BoolP("istio", "", true, "Whether or not the shell Pod should be Istio-enabled. Only has effect when launching a shell Pod in an Istio-enabled Namespace")
+	shellCmd.Flags().BoolP("istio", "", false, "Whether or not the shell Pod should be Istio-enabled. Only has effect when launching a shell Pod in an Istio-enabled Namespace")
 
 	rootCmd.AddCommand(shellCmd)
 }
