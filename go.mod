@@ -4,9 +4,10 @@ go 1.19
 
 require (
 	github.com/Songmu/prompter v0.5.1
-	github.com/aws/aws-sdk-go v1.44.128
+	github.com/aws/aws-sdk-go v1.44.129
 	github.com/creasty/defaults v1.6.0
 	github.com/go-git/go-git/v5 v5.4.2
+	github.com/hashicorp/go-hclog v1.3.1
 	github.com/hashicorp/go-secure-stdlib/awsutil v0.1.6
 	github.com/hashicorp/vault v1.12.1
 	github.com/hashicorp/vault-plugin-secrets-kv v0.13.3
@@ -117,7 +118,6 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-discover v0.0.0-20210818145131-c573d69da192 // indirect
-	github.com/hashicorp/go-hclog v1.3.1 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-kms-wrapping/entropy/v2 v2.0.0 // indirect
 	github.com/hashicorp/go-kms-wrapping/v2 v2.0.5 // indirect
