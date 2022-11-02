@@ -22,7 +22,7 @@ func TestGetGlobalConfigS3(t *testing.T) {
 			Convey("fails ", func() {
 				_, err := GetGlobalConfigS3(input)
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldContainSubstring, "validation error(s) found")
+				So(err.Error(), ShouldContainSubstring, "MissingRegion")
 			})
 		})
 	})
