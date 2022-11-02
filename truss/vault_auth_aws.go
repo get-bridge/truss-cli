@@ -5,7 +5,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
-	awsauth "github.com/hashicorp/vault/builtin/credential/aws"
+	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-secure-stdlib/awsutil"
 )
 
 type vaultAuthAWS struct {
@@ -36,7 +37,7 @@ func (auth *vaultAuthAWS) LoadCreds() (interface{}, error) {
 		return nil, err
 	}
 
-	return awsauth.GenerateLoginData(creds, "", auth.awsRegion)
+	return awsutil.GenerateLoginData(creds, "", auth.awsRegion, hclog.Default())
 }
 
 // Login for VaultAuth interface
