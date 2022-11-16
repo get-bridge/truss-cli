@@ -1,8 +1,8 @@
 module "truss-tenant" {
   source   = "git::ssh://git@github.com/instructure/truss//modules/truss-tenant"
   name     = "{{ .Params.name }}"
-  istio    = true
-  starlord = {{ .Params.starlord }}
+  istio    = false
+  starlord = false
   apps = [{
     name = "{{ .Params.role }}"
     vault = [{

@@ -11,8 +11,6 @@ commonAnnotations: {}
 resources:
   - service.yaml
   - podDisruptionBudget.yaml
-  - rbac.yaml
-  - virtualService.yaml
   # Uncomment this line to enable autoscaling. You'll need to add `app_resources`
   # in ../spinnaker.tf for this to work. Lastly, customize your scaling in
   # `./horizontalPodAutoscaler.yaml`. See https://truss.bridgeops.sh/#/howto/autoscaling
