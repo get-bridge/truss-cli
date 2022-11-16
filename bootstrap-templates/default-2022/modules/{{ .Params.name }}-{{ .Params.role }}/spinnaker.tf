@@ -5,7 +5,7 @@ provider "spinnaker" {
 }
 
 module "deploy-pipeline" {
-  source = "git::ssh://gerrit.instructure.com:29418/bridge-terraform-modules//bridge-spinnaker-eks-pipeline"
+  source = "git@github.com:bridge-terraform-modules//bridge-spinnaker-eks-pipeline"
 
   service     = "{{ .Params.name }}"
   role        = "{{ .Params.role }}"
@@ -22,8 +22,6 @@ module "deploy-pipeline" {
   }
   service_port      = {{ .Params.httpPort }}
   health_check_path = "/health-check"
-
-  trigger_jenkins_job = "{{ .Params.trigger_jenkins_job }}"
 
   # slack_channel      = "#bridge_noisy"
   enable_manual_gate = var.app_env == "prod"

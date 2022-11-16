@@ -1,5 +1,5 @@
-name: default
-description: It's the best
+name: default-2022
+description: It's the newest
 version: 0.1.0
 params:
   - name: name
@@ -14,10 +14,3 @@ params:
   - name: image
     type: string
     prompt: What is the name of your Docker image? Don't include any tags
-  - name: trigger_jenkins_job
-    type: string
-    prompt: What is the name of your Jenkins postmerge job?
-  - name: starlord
-    type: bool
-    prompt: Is your Container Image published to Starlord?
-    default: true
