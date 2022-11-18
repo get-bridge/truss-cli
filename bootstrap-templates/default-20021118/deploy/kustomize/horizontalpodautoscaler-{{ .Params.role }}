@@ -1,0 +1,44 @@
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Params.role }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Params.name }}-{{ .Params.role }}
+
+  # Configure your scaling parameters
+  minReplicas: 3
+  maxReplicas: 3
+  metrics:
+  # Scale by CPU by default, since this is most common
+   - type: Resource
+     resource:
+       name: cpu
+       target:
+         type: Utilization
+         averageUtilization: 80
+
+  # Uncomment the following lines to scale by Memory
+  # - type: Resource
+  #   resource:
+  #     name: memory
+  #     target:
+  #       type: Utilization
+  #       averageUtilization: 80
+
+  # Uncomment the following lines to scale by Datadog metrics
+  # - type: External
+  #   external:
+  #     metric:
+  #       name: sidekiq.queue_latency
+  #       selector:
+  #         matchLabels:
+  #           # These matchLabels refer to Datadog tags, adjust as necessary
+  #           region: cmh
+  #           env: prod
+  #           queuename: myqueue
+  #     target:
+  #       type: Value
+  #       Value: "60"
