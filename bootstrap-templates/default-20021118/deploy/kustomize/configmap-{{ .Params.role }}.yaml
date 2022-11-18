@@ -1,0 +1,12 @@
+# Environment variables that are the same across all environments can be set
+# directly in this file. For items that differ per environment, such as Vault
+# paths that contain env and region or references to Terraform-managed infra,
+# like RDS endpoints, we recommend overriding those in Terraform. See
+# kustomize.tf for additional info.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Params.role }}
+data:
+  EXAMPLE_ENV_VAR: i-am-an-env-var
