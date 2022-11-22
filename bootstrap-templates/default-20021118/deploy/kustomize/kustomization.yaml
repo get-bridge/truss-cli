@@ -1,6 +1,6 @@
 resources:
   - configmap-{{ .Params.role }}.yaml
-  - horizontalpodautoscaler-{{ .Params.role }}
+  - horizontalpodautoscaler-{{ .Params.role }}.yaml
   - ingress-{{ .Params.role }}.yaml
   - poddisruptionbudget-{{ .Params.role }}.yaml
   - service-{{ .Params.role }}.yaml
