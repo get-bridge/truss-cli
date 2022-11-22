@@ -20,7 +20,7 @@ data "kustomization_overlay" "{{ .Params.name }}" {
   patches {
     target {
       kind = "Ingress"
-      name = "api"
+      name = "{{ .Params.role }}"
     }
 
     patch = <<-EOF
