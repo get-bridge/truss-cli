@@ -1,6 +1,6 @@
 name: default
-description: It's the best
-version: 0.1.0
+description: The default for web apps, ca. Dec 2023
+version: 0.2.0
 params:
   - name: name
     type: string
@@ -11,13 +11,12 @@ params:
   - name: httpPort
     type: string
     prompt: What is your app's HTTP port?
+  - name: healthCheckPath
+    type: string
+    prompt: What is your app's health check path? (i.e. /actuator/health)
   - name: image
     type: string
-    prompt: What is the name of your Docker image? Don't include any tags
-  - name: trigger_jenkins_job
+    prompt: What is the name of your Docker image? Don't include any tags (i.e. 127178877223.dkr.ecr.us-east-2.amazonaws.com/my-app)
+  - name: slack_channel
     type: string
-    prompt: What is the name of your Jenkins postmerge job?
-  - name: starlord
-    type: bool
-    prompt: Is your Container Image published to Starlord?
-    default: true
+    prompt: What Slack channel do you want to use for Spinnaker notifications (i.e. #my-app-alerts)
