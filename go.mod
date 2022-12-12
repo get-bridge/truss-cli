@@ -7,7 +7,7 @@ require (
 	github.com/aws/aws-sdk-go v1.44.152
 	github.com/creasty/defaults v1.6.0
 	github.com/go-git/go-git/v5 v5.4.2
-	github.com/hashicorp/go-hclog v1.3.1
+	github.com/hashicorp/go-hclog v1.4.0
 	github.com/hashicorp/go-secure-stdlib/awsutil v0.1.6
 	github.com/hashicorp/vault v1.12.2
 	github.com/hashicorp/vault-plugin-secrets-kv v0.13.3
