@@ -1,6 +1,6 @@
 locals {
   vault_path = "vault:secret/data/bridge/${local.app_env}/${local.region}/{{ .Params.name }}/{{ .Params.role }}/default"
-  hostname   = "hello-jdharrington-${local.app_env}.${local.truss_env}-${local.region}.truss.bridgeops.sh"
+  hostname   = "{{ .Params.name }}-${local.app_env}.${local.truss_env}-${local.region}.truss.bridgeops.sh"
 }
 
 data "kustomization_overlay" "{{ .Params.name }}" {
