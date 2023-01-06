@@ -1,3 +1,6 @@
+# Uncomment this if you'll be triggering individual pipelines from Github
+# Actions. This is NOT necessary if you'll be using a promotion pipeline.
+#
 # data "terraform_remote_state" "common" {
 #   backend = "s3"
 #   config = {
@@ -48,6 +51,9 @@ module "deploy-pipeline" {
   # migrations are broken out into a separate step.
   health_check_initial_delay = 0
 
+  # Uncomment this if you'll be triggering individual pipelines from Github
+  # Actions. This is NOT necessary if you'll be using a promotion pipeline.
+  #
   # trigger_webhook_source = "{{ .Params.name }}-github"
   # trigger_webhook_payload_constraints = {
   #   token = data.terraform_remote_state.common.outputs.spinnaker_webhook_token
