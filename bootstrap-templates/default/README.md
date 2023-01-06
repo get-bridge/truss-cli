@@ -185,8 +185,8 @@ jobs:
     name: Build & Deploy
     runs-on: ubuntu-latest
     env:
-      ECR_AWS_ACCESS_KEY_ID: ${{ secrets.TRUSS_AWS_ACCESS_KEY_ID }}
-      ECR_AWS_SECRET_ACCESS_KEY: ${{ secrets.TRUSS_AWS_SECRET_ACCESS_KEY }}
+      ECR_AWS_ACCESS_KEY_ID: {{ "${{ secrets.TRUSS_AWS_ACCESS_KEY_ID }}" }}
+      ECR_AWS_SECRET_ACCESS_KEY: {{ "${{ secrets.TRUSS_AWS_SECRET_ACCESS_KEY }}" }}
       ECR_AWS_DEFAULT_REGION: us-east-2
     steps:
       - name: Checkout repo
@@ -196,7 +196,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: get-bridge/actions
-          token: ${{ secrets.GIT_HUB_TOKEN }}
+          token: {{ "${{ secrets.GIT_HUB_TOKEN }}" }}
           path: .github/actions
 
       - name: Login to ECR
@@ -204,18 +204,18 @@ jobs:
 
       - uses: docker/build-push-action@v3
         env:
-          IMAGE_REPO: ${{ env.ECR_REGISTRY }}/{{ .Params.name }}
+          IMAGE_REPO: {{ "${{ env.ECR_REGISTRY }}" }}/{{ .Params.name }}
         with:
           tags:  |
-            ${{ env.IMAGE_REPO }}:${{ github.sha }}
-            ${{ env.IMAGE_REPO }}:latest
+            {{ "${{ env.IMAGE_REPO }}:${{ github.sha }}" }}
+            {{ "${{ env.IMAGE_REPO }}:latest" }}
           push: true
 
       - name: Trigger Spinnaker Deploy
         uses: get-bridge/spinnaker-webhook@v2
         env:
-          SPINNAKER_WEBHOOK_HOST: ${{ secrets.SPINNAKER_HOST }}
-          SPINNAKER_WEBHOOK_TOKEN: ${{ secrets.SPINNAKER_TRIGGER_TOKEN }}
+          SPINNAKER_WEBHOOK_HOST: {{ "${{ secrets.SPINNAKER_HOST }}" }}
+          SPINNAKER_WEBHOOK_TOKEN: {{ "${{ secrets.SPINNAKER_TRIGGER_TOKEN }}" }}
           SPINNAKER_WEBHOOK_NAME: {{ .Params.name }}-service-github
 ```
 
