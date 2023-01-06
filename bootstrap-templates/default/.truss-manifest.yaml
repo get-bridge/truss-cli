@@ -17,6 +17,6 @@ params:
   - name: image
     type: string
     prompt: What is the name of your Docker image? Don't include any tags (i.e. 127178877223.dkr.ecr.us-east-2.amazonaws.com/my-app)
-  - name: slack_channel
+  - name: slackChannel
     type: string
     prompt: What Slack channel do you want to use for Spinnaker notifications (i.e. #my-app-alerts)

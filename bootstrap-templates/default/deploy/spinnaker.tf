@@ -53,7 +53,7 @@ module "deploy-pipeline" {
   #   token = data.terraform_remote_state.common.outputs.spinnaker_webhook_token
   # }
 
-  slack_channel      = "{{ .Params.slack_channel }}"
+  slack_channel      = "{{ .Params.slackChannel }}"
   enable_manual_gate = false
 
   failed_message   = "`${local.region}-${local.app_env}` pipeline has failed. $${trigger['parameters']['committer_name']} ($${trigger['parameters']['committer_email']}) `$${trigger['parameters']['message']}` ($${trigger['parameters']['sha']})"

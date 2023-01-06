@@ -89,9 +89,9 @@ params:
   name: ""
   role: ""
   httpPort: ""
+  healthCheckPath: ""
   image: ""
-  trigger_jenkins_job: ""
-  starlord: true
+  slackChannel: ""
 ```
 
 > You can also provide param values by passing `--set name=value` to the
