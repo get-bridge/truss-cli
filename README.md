@@ -111,10 +111,13 @@ params:
 > You can also provide param values by passing `--set name=value` to the
 > `truss bootstrap` command.
 
-With your configuration file in place at the root of your project, simply run
-`truss bootstrap` to create your local `./truss` directory. This deployment
-config will serve as a starting point for your project, and it is expected that
-you will make changes per your application's needs. Thus, your
+With your configuration file in place at the root of your project, create your
+local `./truss` directory by running:
+
+`aws-vault exec bridge -- truss bootstrap`
+
+This deployment config will serve as a starting point for your project, and it
+is expected that you will make changes per your application's needs. Thus, your
 `bootstrap.truss.yaml` is no longer necessary.
 
 In the future, we might strive to make this template customizable enough such
