@@ -56,26 +56,30 @@ go get github.com/get-bridge/truss-cli truss
 With the `truss bootstrap` command, you can quickly and easily bootstrap your
 Truss deployment configuration using one of our pre-made templates. To get
 started, you'll need to configure the bootstrapper by creating a
-`bootstrap.truss.yaml` file. It should look something like this:
+`bootstrap.truss.yaml` file. It should look something like this, but be sure to
+fill out the `params` section as appropriate for your service:
 
 ```yaml
 # The following templateSource configuration represents the default values,
-# which means you'll need to have insopshub credentials loaded in order to
+# which means you'll need to have bridge AWS credentials loaded in order to
 # assume the ops-admin role. You only need to include any of this in your local
 # configuration file if you intend to override these defaults.
 templateSource:
   type: s3
-  local:
-    directory: ./bootstrap-templates
   s3:
     bucket: truss-cli-global-config
     region: us-east-2
     prefix: bootstrap-templates
     role: arn:aws:iam::127178877223:role/xacct/ops-admin
-  git:
-    clone_url: git@github.com:get-bridge/truss-cli.git
-    directory: bootstrap-templates
-    checkout_ref: refs/heads/master
+  # If you need to acccess templates from a git or local source, uncomment
+  # and tweak as needed, and change `type` above.
+  #
+  # local:
+  #   directory: ./bootstrap-templates
+  # git:
+  #   clone_url: git@github.com:get-bridge/truss-cli.git
+  #   directory: bootstrap-templates
+  #   checkout_ref: refs/heads/master
 
 # template represents which template to render. The default is "default"
 template: default
@@ -86,12 +90,22 @@ trussDir: truss
 # defined in the template in the `.truss-manifest.yaml` file. The default values
 # for the default template are included here.
 params:
+  # Your service's name
   name: ""
-  role: ""
-  httpPort: ""
+
+  # The role of your service's first component, e.g. 'api'
+  role: "api"
+
+  # The HTTP port your application exposes
+  httpPort: "8080"
+
+  # The path your health check is exposed on, e.g. '/actuator/health' or '/api/prefix/actuator/health'
   healthCheckPath: ""
-  image: ""
-  slackChannel: ""
+
+  image: "127178877223.dkr.ecr.us-east-2.amazonaws.com/<service-name>"
+
+  # The Slack channel you want to receive deployment notifications to
+  slackChannel: "#<team-name>-notifications"
 ```
 
 > You can also provide param values by passing `--set name=value` to the
