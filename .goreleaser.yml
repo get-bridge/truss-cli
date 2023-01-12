@@ -8,6 +8,12 @@ builds:
   ldflags:
     - -X github.com/get-bridge/truss-cli/cmd.Version={{.Version}}
   binary: truss
+  goos:
+    - darwin
+    - linux
+  goarch:
+    - amd64
+    - arm64
 archives:
 - replacements:
     darwin: Darwin
