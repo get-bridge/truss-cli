@@ -12,7 +12,7 @@ require (
 	github.com/hashicorp/vault v1.12.2
 	github.com/hashicorp/vault-plugin-secrets-kv v0.13.3
 	github.com/hashicorp/vault/api v1.8.2
-	github.com/hashicorp/vault/sdk v0.6.1
+	github.com/hashicorp/vault/sdk v0.7.0
 	github.com/iancoleman/strcase v0.2.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/phayes/freeport v0.0.0-20220201140144-74d24b5ae9f5
