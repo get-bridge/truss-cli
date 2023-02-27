@@ -44,6 +44,10 @@ If you are using (tfenv)[https://github.com/tfutils/tfenv], it will automagicall
 the correct version of Terraform as specified in `.terraform-version`. If you are not,
 please make sure you are using the correct version of Terraform.
 
+You'll also need to make sure you have Spinnaker credentials generated and configured
+properly to create pipelines. If you're not sure that you have credentials, you can
+sign into Google and generate them [here](https://spinnaker-x509.nonprod-cmh.truss.bridgeops.sh/x509/prod).
+
 First, provision your shared resources:
 
 ```shell
