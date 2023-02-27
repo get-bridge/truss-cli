@@ -40,7 +40,7 @@ This is how you deploy {{ .Params.name }} on Truss! Spinnaker pipelines are avai
 
 ### Getting Started
 
-If you are using (tfenv)[https://github.com/tfutils/tfenv], it will automagically use
+If you are using [tfenv](https://github.com/tfutils/tfenv), it will automagically use
 the correct version of Terraform as specified in `.terraform-version`. If you are not,
 please make sure you are using the correct version of Terraform.
 
@@ -90,7 +90,7 @@ aws-vault exec bridge -- truss secrets push --all
 
 ### Adding an RDS database
 
-TODO, but will use (Pier's Aurora TF module)[https://github.com/get-bridge/bridge-pier-aurora-module].
+TODO, but will use [Pier's Aurora TF module](https://github.com/get-bridge/bridge-pier-aurora-module).
 
 ### Adding a Promotion Pipeline
 
@@ -152,7 +152,7 @@ send a webhook to Spinnaker.
 First, make sure that you have a Github Personal Access Token with read-write permission
 to manage repository secrets set in a `GITHUB_TOKEN` environment variable.
 
-To add the token, in `{{ .Trussdir}}/common/spinnaker.tf`, uncomment the `github_actions_secret`
+To add the token, in `{{ .TrussDir }}/common/spinnaker.tf`, uncomment the `github_actions_secret`
 resource above the `promotion-pipeline` module. **NOTE**: Please be certain that the `repository`
 indicated in this resource is the one you want to set the secret on. If the repo name is wrong,
 you will overwrite the wrong secret and break CD for someone else! Once uncommented, re-apply
@@ -228,4 +228,4 @@ application's container image as specified by your `Dockerfile`, push it to EC2 
 Registry, and send a webhook to Spinnaker, handing it off to be deployed by your pipeline
 of choice.
 
-See the (spinnaker-webhook Action's docs)[https://github.com/get-bridge/spinnaker-webhook] for more options.
+See the [spinnaker-webhook Action's docs](https://github.com/get-bridge/spinnaker-webhook) for more options.
