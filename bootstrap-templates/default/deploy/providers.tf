@@ -1,5 +1,5 @@
 provider "aws" {
-  region              = "us-east-2" # TODO: parameterize per region
+  region              = module.truss-metadata.aws_region[local.region]
   allowed_account_ids = ["127178877223"]
 
   assume_role {
