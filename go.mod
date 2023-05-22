@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/Songmu/prompter v0.5.1
-	github.com/aws/aws-sdk-go v1.44.210
+	github.com/aws/aws-sdk-go v1.44.266
 	github.com/creasty/defaults v1.6.0
 	github.com/go-git/go-git/v5 v5.5.2
 	github.com/hashicorp/go-hclog v1.4.0
