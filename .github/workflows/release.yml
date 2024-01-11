@@ -5,7 +5,7 @@ name: Release
 # Controls when the action will run. Triggers the workflow on push or pull request
 on:
   push:
-    tags: ['*']
+    tags: ["*"]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -16,24 +16,24 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v2
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
 
-    # Unshallow required for goreleaser's changelog behavior
-    - name: Unshallow
-      run: git fetch --prune --unshallow
+      # Unshallow required for goreleaser's changelog behavior
+      - name: Unshallow
+        run: git fetch --prune --unshallow
 
-    # Go get'em!
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.19
+      # Go get'em!
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.21"
 
-    # Release the thing!
-    - name: Run GoReleaser
-      uses: goreleaser/goreleaser-action@v2
-      with:
-        version: latest
-        args: release --rm-dist
-      env:
-        GITHUB_TOKEN: ${{ secrets.INSTRUCTURE_BRIDGE_GITHUB_BOT_REPO_RW }}
+      # Release the thing!
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          version: "1.23"
+          args: release --rm-dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.INSTRUCTURE_BRIDGE_GITHUB_BOT_REPO_RW }}
