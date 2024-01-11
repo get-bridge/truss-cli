@@ -4,17 +4,17 @@ before:
     - go generate ./...
 
 builds:
-- env:
-  - CGO_ENABLED=0
-  ldflags:
-    - -X github.com/get-bridge/truss-cli/cmd.Version={{.Version}}
-  binary: truss
-  goos:
-    - darwin
-    - linux
-  goarch:
-    - amd64
-    - arm64
+  - env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -X github.com/get-bridge/truss-cli/cmd.Version={{.Version}}
+    binary: truss
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
 
 archives:
   - format: tar.gz
@@ -32,7 +32,7 @@ archives:
         format: zip
 
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 
 snapshot:
   name_template: "{{ .Tag }}-next"
@@ -41,16 +41,15 @@ changelog:
   sort: asc
   filters:
     exclude:
-    - '^docs:'
-    - '^test:'
+      - "^docs:"
+      - "^test:"
 brews:
-  -
-    name: truss-cli
+  - name: truss-cli
     description: CLI to help manage many k8s clusters
     homepage: https://github.com/get-bridge/truss-cli
-    tap:
-      owner: get-bridge
-      name: homebrew-tap
+    repository:
+      - name: homebrew-tap
+        owner: get-bridge
     folder: Formula
     dependencies:
       - name: kubectl
