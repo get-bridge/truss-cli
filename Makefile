@@ -6,3 +6,8 @@ release:
 
 dryrun:
 	goreleaser --snapshot --skip-publish --rm-dist
+
+test:
+	go mod download
+	go generate ./...
+	go test ./cmd/ ./truss/ -timeout 15000ms
