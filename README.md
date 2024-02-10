@@ -193,6 +193,11 @@ cobra add my-new-command
 ```
 
 ### Testing
+
+Tests will spin up an instance of Vault via Docker using the [testcontainers
+Vault module](https://golang.testcontainers.org/modules/vault/). This requires
+Docker or another API-compatible container runtime on your machine.
+
 Add a `.envrc` file that looks like this:
 ```
 export TEST_S3_BUCKET=truss-kubeconfig-us-east-2

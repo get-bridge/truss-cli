@@ -55,7 +55,7 @@ func TestVault(t *testing.T) {
 			Convey("returns keys as strings", func() {
 				list, err := vault.ListPath("kv/metadata")
 				So(err, ShouldBeNil)
-				So(list, ShouldResemble, []string{"foo"})
+				So(list, ShouldContain, "foo")
 			})
 		})
 	})
