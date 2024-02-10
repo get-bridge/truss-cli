@@ -8,8 +8,8 @@ import (
 )
 
 func TestVault(t *testing.T) {
-	vault, server := createTestVault(t)
-	defer server.Stop()
+	vault, _ := createTestVault(t)
+	//defer server.Stop()
 
 	Convey("Vault", t, func() {
 		binaryContent := []byte{0x0, 0xe8, 0x03, 0xd0, 0x07}
@@ -56,7 +56,7 @@ func TestVault(t *testing.T) {
 			Convey("returns keys as strings", func() {
 				list, err := vault.ListPath("kv/metadata")
 				So(err, ShouldBeNil)
-				So(list, ShouldResemble, []string{"foo"})
+				So(list, ShouldContain, "foo")
 			})
 		})
 	})

@@ -9,8 +9,8 @@ import (
 )
 
 func TestSecretFileConfig(t *testing.T) {
-	vault, server := createTestVault(t)
-	defer server.Stop()
+	vault, _ := createTestVault(t)
+	//defer server.Stop()
 
 	Convey("TestSecretConfig", t, func() {
 		transitKey := "file-test-transit"

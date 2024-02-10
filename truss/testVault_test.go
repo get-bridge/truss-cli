@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
-	"strconv"
 	"testing"
 	"time"
 
@@ -20,15 +20,18 @@ type VaultDevServer struct {
 	cmd   *exec.Cmd
 }
 
-var port = 8200
-
-func NewVaultDevServer() *VaultDevServer {
-	listenAddr := fmt.Sprintf("http://localhost:%s", strconv.Itoa(port))
-	return &VaultDevServer{
-		Addr:  listenAddr,
-		Token: "",
-	}
+var server *VaultDevServer = &VaultDevServer{
+	Addr:  "http://localhost:8200",
+	Token: "",
 }
+
+// func NewVaultDevServer() *VaultDevServer {
+// 	listenAddr := fmt.Sprintf("http://localhost:%s", strconv.Itoa(port))
+// 	return &VaultDevServer{
+// 		Addr:  listenAddr,
+// 		Token: "",
+// 	}
+// }
 
 func (v *VaultDevServer) Start() error {
 	v.cmd = exec.Command("vault", "server", "-dev", fmt.Sprintf("-address=%s", v.Addr))
@@ -82,20 +85,15 @@ func (v *VaultDevServer) Client() (*vault.Client, error) {
 	return client, nil
 }
 
-// creates test vault server
-func createTestVault(t *testing.T) (*VaultCmd, *VaultDevServer) {
-	t.Helper()
-
-	server := NewVaultDevServer()
-
+func SetupVaultServer() error {
 	err := server.Start()
 	if err != nil {
-		t.Fatalf("failed to start Vault server: %s", err)
+		return fmt.Errorf("failed to start Vault server: %s", err)
 	}
 
 	client, err := server.Client()
 	if err != nil {
-		t.Fatal("failed to initialize Vault client")
+		return fmt.Errorf("failed to initialize Vault client: %s", err)
 	}
 
 	// Create KV V2 mount
@@ -110,7 +108,7 @@ func createTestVault(t *testing.T) (*VaultCmd, *VaultDevServer) {
 		},
 	)
 	if err != nil {
-		t.Fatal("failed to enable kv engine")
+		return fmt.Errorf("failed to enable kv engine: %s", err)
 	}
 
 	// Create transit mount
@@ -122,8 +120,19 @@ func createTestVault(t *testing.T) (*VaultCmd, *VaultDevServer) {
 		},
 	)
 	if err != nil {
-		t.Fatal("failed to enable transit engine")
+		return fmt.Errorf("failed to enable transit engine: %s", err)
 	}
+
+	return nil
+}
+
+func TeardownVaultServer() {
+	server.Stop()
+}
+
+// creates test vault server
+func createTestVault(t *testing.T) (*VaultCmd, *VaultDevServer) {
+	t.Helper()
 
 	vault := VaultWithToken("", server.Token)
 	vault.addr = server.Addr
@@ -134,9 +143,21 @@ func createTestVault(t *testing.T) (*VaultCmd, *VaultDevServer) {
 		if err == nil {
 			return vault, server
 		}
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(time.Second)
 		timeout++
 	}
 	t.Fatal("vault engine not started")
 	return nil, nil
+}
+
+func TestMain(m *testing.M) {
+	err := SetupVaultServer()
+	if err != nil {
+		fmt.Printf("Failed to setup Vault server: %s\n", err)
+		os.Exit(1)
+	}
+
+	exitVal := m.Run()
+	TeardownVaultServer()
+	os.Exit(exitVal)
 }
