@@ -8,8 +8,7 @@ import (
 )
 
 func TestVault(t *testing.T) {
-	vault, _ := createTestVault(t)
-	//defer server.Stop()
+	vault := createTestVault(t)
 
 	Convey("Vault", t, func() {
 		binaryContent := []byte{0x0, 0xe8, 0x03, 0xd0, 0x07}

@@ -14,28 +14,21 @@ import (
 	"github.com/hashicorp/vault-client-go/schema"
 )
 
-type VaultDevServer struct {
+type VaultServer struct {
 	Addr  string
 	Token string
 	cmd   *exec.Cmd
 }
 
-var server *VaultDevServer = &VaultDevServer{
+var server *VaultServer = &VaultServer{
 	Addr:  "http://localhost:8200",
 	Token: "",
 }
 
-// func NewVaultDevServer() *VaultDevServer {
-// 	listenAddr := fmt.Sprintf("http://localhost:%s", strconv.Itoa(port))
-// 	return &VaultDevServer{
-// 		Addr:  listenAddr,
-// 		Token: "",
-// 	}
-// }
-
-func (v *VaultDevServer) Start() error {
+func (v *VaultServer) Start() error {
 	v.cmd = exec.Command("vault", "server", "-dev", fmt.Sprintf("-address=%s", v.Addr))
 
+	// Attach to Vault's stdout and setup a scanner to read it
 	stdout, err := v.cmd.StdoutPipe()
 	if err != nil {
 		return err
@@ -43,11 +36,13 @@ func (v *VaultDevServer) Start() error {
 
 	scanner := bufio.NewScanner(stdout)
 
+	// Start Vault
 	err = v.cmd.Start()
 	if err != nil {
 		return err
 	}
 
+	// Scan stdout until we read the root token
 	for scanner.Scan() {
 		output := scanner.Text()
 
@@ -64,12 +59,14 @@ func (v *VaultDevServer) Start() error {
 	return nil
 }
 
-func (v *VaultDevServer) Stop() {
+// Send Vault a KILL signal and wait for it to stop
+func (v *VaultServer) Stop() {
 	v.cmd.Process.Kill()
 	v.cmd.Wait()
 }
 
-func (v *VaultDevServer) Client() (*vault.Client, error) {
+// Initialize and authenticate a Vault client
+func (v *VaultServer) Client() (*vault.Client, error) {
 	client, err := vault.New(
 		vault.WithAddress(v.Addr),
 		vault.WithRequestTimeout(30*time.Second),
@@ -130,24 +127,14 @@ func TeardownVaultServer() {
 	server.Stop()
 }
 
-// creates test vault server
-func createTestVault(t *testing.T) (*VaultCmd, *VaultDevServer) {
+// Initialize an authenticated VaultCmd
+func createTestVault(t *testing.T) *VaultCmd {
 	t.Helper()
 
 	vault := VaultWithToken("", server.Token)
 	vault.addr = server.Addr
 
-	timeout := 0
-	for timeout < 20 {
-		_, err := vault.ListPath("kv/metadata")
-		if err == nil {
-			return vault, server
-		}
-		time.Sleep(time.Second)
-		timeout++
-	}
-	t.Fatal("vault engine not started")
-	return nil, nil
+	return vault
 }
 
 func TestMain(m *testing.M) {
@@ -157,7 +144,9 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
+	// Run tests
 	exitVal := m.Run()
+
 	TeardownVaultServer()
 	os.Exit(exitVal)
 }

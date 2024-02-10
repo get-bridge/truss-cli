@@ -11,8 +11,7 @@ import (
 )
 
 func TestSecretDirConfig(t *testing.T) {
-	vault, _ := createTestVault(t)
-	//defer server.Stop()
+	vault := createTestVault(t)
 
 	Convey("TestSecretConfig", t, func() {
 		dir, err := ioutil.TempDir("", "")
