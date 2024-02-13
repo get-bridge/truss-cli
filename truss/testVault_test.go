@@ -1,61 +1,57 @@
 package truss
 
 import (
+	"context"
+	"log"
+	"os"
 	"testing"
-	"time"
 
-	kv "github.com/hashicorp/vault-plugin-secrets-kv"
-	"github.com/hashicorp/vault/api"
-	"github.com/hashicorp/vault/builtin/logical/transit"
-	vaulthttp "github.com/hashicorp/vault/http"
-	"github.com/hashicorp/vault/sdk/logical"
-	hashivault "github.com/hashicorp/vault/vault"
+	"github.com/testcontainers/testcontainers-go/modules/vault"
 )
 
-// creates test vault server
+var vaultAddr = ""
+var vaultToken = "this-is-the-root-token"
+
+// Initialize an authenticated VaultCmd
 func createTestVault(t *testing.T) *VaultCmd {
 	t.Helper()
 
-	coreConfig := &hashivault.CoreConfig{
-		LogicalBackends: map[string]logical.Factory{
-			"kv":      kv.Factory,
-			"transit": transit.Factory,
-		},
-	}
-	cluster := hashivault.NewTestCluster(t, coreConfig, &hashivault.TestClusterOptions{
-		HandlerFunc: vaulthttp.Handler,
-	})
-	cluster.Start()
+	vault := VaultWithToken("", vaultToken)
+	vault.addr = vaultAddr
 
-	// Create KV V2 mount
-	sys := cluster.Cores[0].Client.Sys()
-	if err := sys.Mount("kv", &api.MountInput{
-		Type: "kv",
-		Options: map[string]string{
-			"version": "2",
-		},
-	}); err != nil {
-		t.Fatal(err)
-	}
-	// Create transit mount
-	if err := sys.Mount("transit", &api.MountInput{
-		Type: "transit",
-	}); err != nil {
-		t.Fatal(err)
+	return vault
+}
+
+// This wraps our entire test run to:
+// 1. Start and configure Vault with required backends
+// 2. Execute tests
+// 3. Teardown Vault
+// 4. Exit with the exit value as determined by the tests
+func TestMain(m *testing.M) {
+	ctx := context.Background()
+
+	// Start Vault server with kv2 and transit backends enabled
+	vaultContainer, err := vault.RunContainer(ctx, vault.WithToken(vaultToken), vault.WithInitCommand(
+		"secrets enable -version=2 -path=kv kv",
+		"secrets enable -path=transit transit",
+	))
+
+	if err != nil {
+		log.Fatalf("failed to start container: %s", err)
 	}
 
-	vault := VaultWithToken("", cluster.Cores[0].Client.Token())
-	vault.addr = cluster.Cores[0].Client.Address()
-
-	timeout := 0
-	for timeout < 20 {
-		_, err := vault.ListPath("kv/metadata")
-		if err == nil {
-			return vault
-		}
-		time.Sleep(100 * time.Millisecond)
-		timeout++
+	vaultAddr, err = vaultContainer.HttpHostAddress(ctx)
+	if err != nil {
+		log.Fatalf("failed to get Vault address: %s", err)
 	}
-	t.Fatal("vault engine not started")
-	return nil
+
+	// Run tests
+	exitVal := m.Run()
+
+	// Teardown Vault server
+	if err := vaultContainer.Terminate(ctx); err != nil {
+		log.Fatalf("failed to terminate container: %s", err)
+	}
+
+	os.Exit(exitVal)
 }
