@@ -43,9 +43,9 @@ func VaultWithToken(kubeconfig string, authToken string) *VaultCmd {
 }
 
 func newVaultClient(addr string) (*api.Client, error) {
-	config := api.Config{Address: addr}
+	config := &api.Config{Address: addr}
 	config.ConfigureTLS(&api.TLSConfig{Insecure: true})
-	return api.NewClient(&config)
+	return api.NewClient(config)
 }
 
 func (vault *VaultCmd) newVaultClientWithToken() (*api.Client, error) {
