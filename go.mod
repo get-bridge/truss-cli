@@ -6,7 +6,7 @@ toolchain go1.21.6
 
 require (
 	github.com/Songmu/prompter v0.5.1
-	github.com/aws/aws-sdk-go v1.49.24
+	github.com/aws/aws-sdk-go v1.50.20
 	github.com/creasty/defaults v1.7.0
 	github.com/go-git/go-git/v5 v5.11.0
 	github.com/hashicorp/go-hclog v1.6.2
