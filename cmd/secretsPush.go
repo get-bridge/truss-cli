@@ -40,7 +40,7 @@ var secretsPushCmd = &cobra.Command{
 }
 
 func promptPushSecret(sm *truss.SecretsManager, secret truss.SecretConfig) error {
-	areSame, err := secretCompare(sm, secret, true)
+	areSame, err := secretCompare(sm, secret, true, forcePush)
 	if err != nil {
 		return err
 	}
@@ -49,6 +49,9 @@ func promptPushSecret(sm *truss.SecretsManager, secret truss.SecretConfig) error
 		return nil
 	}
 
+	if forcePush {
+		fmt.Println("Force pushing secrets.")
+	}
 	if forcePush || prompter.YesNo(fmt.Sprintf("Push to environment %s?", secret.Name()), false) {
 		return sm.Push(secret)
 	}
