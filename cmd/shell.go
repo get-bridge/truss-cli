@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
-	"strconv"
 	"strings"
 	"syscall"
 
@@ -125,7 +124,7 @@ func buildShellKubectlArgs(podName string, image string, istioEnabled bool, serv
 	overrides.Metadata.Name = ""
 	overrides.Metadata.GenerateName = podName + "-"
 	overrides.Metadata.Annotations = map[string]string{
-		"sidecar.istio.io/inject": strconv.FormatBool(istioEnabled),
+		"ad.datadoghq.com/exclude": "true",
 	}
 
 	if serviceaccount != "" {
