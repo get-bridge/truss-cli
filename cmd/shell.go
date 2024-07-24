@@ -74,7 +74,8 @@ Examples:
 			return nil
 		}
 
-		podName := "shell-" + strings.Replace(user.Username, ".", "-", -1)
+		replacer := strings.NewReplacer(".", "-", "_", "-")
+		podName := "shell-" + replacer.Replace(user.Username)
 
 		// Fetch options from flags
 		image, err := cmd.Flags().GetString("image")
