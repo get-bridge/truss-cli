@@ -1,0 +1,17 @@
+namespace: "{{ .Params.name }}-prod"
+bases:
+  - ../../../modules/{{ .Params.name }}-{{ .Params.role }}/kustomize/predeploy
+
+patchesStrategicMerge:
+  - |-
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: "{{ .Params.name }}-{{ .Params.role }}-predeploy-${trigger['parameters']['sha']}"
+    spec:
+      template:
+        metadata:
+          annotations:
+            vault.security.banzaicloud.io/vault-role: {{ .Params.name }}-prod-{{ .Params.role }}
+        spec:
+          serviceAccountName: {{ .Params.name }}-prod-{{ .Params.role }}
