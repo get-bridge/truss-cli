@@ -10,7 +10,7 @@ require (
 	github.com/creasty/defaults v1.7.0
 	github.com/go-git/go-git/v5 v5.11.0
 	github.com/hashicorp/go-hclog v1.6.2
-	github.com/hashicorp/go-secure-stdlib/awsutil v0.2.3
+	github.com/hashicorp/go-secure-stdlib/awsutil v0.3.0
 	github.com/hashicorp/vault/api v1.10.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/mitchellh/go-homedir v1.1.0
