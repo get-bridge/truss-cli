@@ -40,7 +40,7 @@ var secretsPullCmd = &cobra.Command{
 }
 
 func pullSecret(sm *truss.SecretsManager, secret truss.SecretConfig) error {
-	areSame, err := secretCompare(sm, secret, false)
+	areSame, err := secretCompare(sm, secret, false, forcePull)
 	if err != nil {
 		return err
 	}
@@ -49,6 +49,9 @@ func pullSecret(sm *truss.SecretsManager, secret truss.SecretConfig) error {
 		return nil
 	}
 
+	if forcePull {
+		fmt.Println("Force pulling secrets.")
+	}
 	if forcePull || prompter.YesNo(fmt.Sprintf("Pull from environment %s?", secret.Name()), false) {
 		return sm.Pull(secret)
 	}

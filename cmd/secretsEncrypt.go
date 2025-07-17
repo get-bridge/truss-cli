@@ -24,11 +24,18 @@ var secretsEncryptCmd = &cobra.Command{
 			return err
 		}
 
-		promptPushSecret(sm, secret)
+		if encryptPush {
+			err := promptPushSecret(sm, secret)
+			if err != nil {
+				return err
+			}
+		}
+
 		return nil
 	},
 }
 
 func init() {
 	secretsEncryptCmd.Flags().BoolVarP(&encryptPush, "push", "y", false, "Push after encrypt")
+	secretsEncryptCmd.Flags().BoolVarP(&forcePush, "force", "f", false, "Used with push to skip prompt")
 }
