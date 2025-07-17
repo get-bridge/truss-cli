@@ -154,7 +154,7 @@ func buildShellKubectlArgs(podName string, image string, istioEnabled bool, serv
 }
 
 func init() {
-	shellCmd.Flags().StringP("image", "i", "jdharrington/toolbox:latest", "The Docker image to use")
+	shellCmd.Flags().StringP("image", "i", "127178877223.dkr.ecr.us-east-2.amazonaws.com/toolbox:latest", "The Docker image to use")
 	shellCmd.Flags().StringP("namespace", "n", "", "Namespace to run the shell Pod in")
 	shellCmd.Flags().StringP("serviceaccount", "s", "", "ServiceAccount to run the shell Pod as")
 	shellCmd.Flags().BoolP("istio", "", false, "Whether or not the shell Pod should be Istio-enabled. Only has effect when launching a shell Pod in an Istio-enabled Namespace")
