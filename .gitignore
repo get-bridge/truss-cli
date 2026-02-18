@@ -30,3 +30,4 @@ dist/
 
 # vscode
 .vscode/
+.truss/
