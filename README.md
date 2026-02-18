@@ -46,8 +46,10 @@ brew install get-bridge/tap/truss-cli
 ### GO
 
 ```sh
-go get github.com/get-bridge/truss-cli truss
+go install github.com/get-bridge/truss-cli@latest
 ```
+
+This will install the `truss-cli` binary to `$GOPATH/bin` (or `$HOME/go/bin` if `GOPATH` is not set). Make sure this directory is in your `PATH`.
 
 ## Usage
 
