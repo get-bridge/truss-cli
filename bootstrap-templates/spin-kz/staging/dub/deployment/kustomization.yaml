@@ -1,0 +1,17 @@
+namespace: "{{ .Params.name }}-staging"
+bases:
+  - ../../../modules/{{ .Params.name }}-{{ .Params.role }}/kustomize/deployment
+
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: {{ .Params.name }}-{{ .Params.role }}
+    spec:
+      template:
+        metadata:
+          annotations:
+            vault.security.banzaicloud.io/vault-role: {{ .Params.name }}-staging-{{ .Params.role }}
+        spec:
+          serviceAccountName: {{ .Params.name }}-staging-{{ .Params.role }}
