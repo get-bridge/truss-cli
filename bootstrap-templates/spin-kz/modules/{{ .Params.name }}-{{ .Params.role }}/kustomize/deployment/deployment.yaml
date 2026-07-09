@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ .Params.name }}-{{ .Params.role }}"
+  annotations:
+    traffic.spinnaker.io/load-balancers: '["service {{ .Params.name }}-{{ .Params.role }}"]'
+  labels:
+    version: "${trigger['parameters']['sha']}"
+spec:
+  replicas: 2
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      service-role: "{{ .Params.role }}"
+  template:
+    metadata:
+      labels:
+        version: "${trigger['parameters']['sha']}"
+      annotations:
+        sidecar.istio.io/rewriteAppHTTPProbers: "true"
+        traffic.sidecar.istio.io/excludeOutboundPorts: "8200"
+        vault.security.banzaicloud.io/vault-addr: "https://vault.vault.svc.cluster.local:8200"
+        vault.security.banzaicloud.io/vault-path: kubernetes
+        vault.security.banzaicloud.io/vault-skip-verify: "true"
+        # ad.datadoghq.com/{{ .Params.name }}-{{ .Params.role }}.check_names: '["openmetrics"]'
+        # ad.datadoghq.com/{{ .Params.name }}-{{ .Params.role }}.init_configs: "[{}]"
+        # ad.datadoghq.com/{{ .Params.name }}-{{ .Params.role }}.instances: "[{}]"
+    spec:
+      containers:
+        - envFrom:
+            - configMapRef:
+                name: "{{ .Params.name }}-{{ .Params.role }}"
+          name: "{{ .Params.name }}-{{ .Params.role }}"
+          image: "{{ .Params.image }}:${trigger['parameters']['sha']}"
+          imagePullPolicy: Always
+          ports:
+            - containerPort: {{ .Params.httpPort }}
+              name: http
+              protocol: TCP
+
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders: []
+              path: /health-check
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders: []
+              path: /health-check
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          resources:
+            limits:
+              cpu: 100m
+              memory: 100Mi
+            requests:
+              cpu: 100m
+              memory: 100Mi
+      imagePullSecrets:
+        - name: starlord

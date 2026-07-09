@@ -1,0 +1,38 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    ttl: 4 days
+  name: "{{ .Params.name }}-{{ .Params.role }}-postdeploy-${trigger['parameters']['sha']}"
+  labels:
+    version: "${trigger['parameters']['sha']}"
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+        vault.security.banzaicloud.io/vault-addr: "https://vault.vault.svc.cluster.local:8200"
+        vault.security.banzaicloud.io/vault-path: kubernetes
+        vault.security.banzaicloud.io/vault-skip-verify: "true"
+      labels:
+        version: "${trigger['parameters']['sha']}"
+    spec:
+      containers:
+        - name: "{{ .Params.name }}-{{ .Params.role }}-postdeploy"
+          image: "{{ .Params.image }}:${trigger['parameters']['sha']}"
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: "{{ .Params.name }}-{{ .Params.role }}"
+          # args:
+          #   - --pre-deploy
+          resources:
+            limits:
+              cpu: 100m
+              memory: 100Mi
+            requests:
+              cpu: 100m
+              memory: 100Mi
+      restartPolicy: Never
+  ttlSecondsAfterFinished: 86400

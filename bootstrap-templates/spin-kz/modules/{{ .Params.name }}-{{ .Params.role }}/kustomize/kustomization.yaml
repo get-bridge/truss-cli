@@ -1,0 +1,33 @@
+---
+# Use this to add labels to all of your deployment's resources
+commonLabels:
+  app: {{ .Params.name }}
+  role: {{ .Params.role }}
+
+# Use this to add annotations to all of your deployment's resources
+commonAnnotations: {}
+
+# Resources to include in the deployment
+resources:
+  - service.yaml
+  - podDisruptionBudget.yaml
+  - virtualService.yaml
+  # Uncomment this line to enable autoscaling. You'll need to add `app_resources`
+  # in ../spinnaker.tf for this to work. Lastly, customize your scaling in
+  # `./horizontalPodAutoscaler.yaml`. See https://truss.bridgeops.sh/#/howto/autoscaling
+  # - horizontalPodAutoscaler.yaml
+
+# Generate config maps for your deployment. This should be overridden in an
+# environment-specific kustomization.yaml. Defaults go here.
+configMapGenerator:
+  - name: {{ .Params.name }}-{{ .Params.role }}
+    literals:
+      - RAILS_ENV=production
+      - INST_DOG_TAGS='{}'
+      - INST_STATSD_HOST="datadog"
+      - INST_STATSD_APPEND_HOSTNAME="false"
+
+# Since we're using Spinnaker to create the Deployment, we need to disable this
+# fancy Kustomize feature.
+generatorOptions:
+  disableNameSuffixHash: true
