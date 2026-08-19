@@ -188,23 +188,21 @@ jobs:
   build-image:
     name: Build & Deploy
     runs-on: ubuntu-latest
-    env:
-      ECR_AWS_ACCESS_KEY_ID: {{ "${{ secrets.TRUSS_AWS_ACCESS_KEY_ID }}" }}
-      ECR_AWS_SECRET_ACCESS_KEY: {{ "${{ secrets.TRUSS_AWS_SECRET_ACCESS_KEY }}" }}
-      ECR_AWS_DEFAULT_REGION: us-east-2
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Checkout actions repo
-        uses: actions/checkout@v3
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          repository: get-bridge/actions
-          token: {{ "${{ secrets.GIT_HUB_TOKEN }}" }}
-          path: .github/actions
+          role-to-assume: arn:aws:iam::127178877223:role/github/github-truss
+          aws-region: us-east-2
 
       - name: Login to ECR
-        uses: ./.github/actions/ecr-auth
+        uses: aws-actions/amazon-ecr-login@v2
 
       - uses: docker/build-push-action@v3
         env:
