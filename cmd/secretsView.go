@@ -23,13 +23,13 @@ var secretsViewCmd = &cobra.Command{
 			return err
 		}
 
-		_, err = secretCompare(sm, secret, true)
+		_, err = secretCompare(sm, secret, true, false)
 		return err
 	},
 }
 
 // return true if same
-func secretCompare(sm *truss.SecretsManager, secret truss.SecretConfig, localToRemote bool) (bool, error) {
+func secretCompare(sm *truss.SecretsManager, secret truss.SecretConfig, localToRemote bool, quiet bool) (bool, error) {
 	localContent, remoteContent, err := sm.View(secret)
 	if err != nil {
 		return false, err
@@ -42,6 +42,8 @@ func secretCompare(sm *truss.SecretsManager, secret truss.SecretConfig, localToR
 	} else {
 		diffs = dmp.DiffMain(localContent, remoteContent, false)
 	}
-	fmt.Println(dmp.DiffPrettyText(diffs))
+	if !quiet {
+		fmt.Println(dmp.DiffPrettyText(diffs))
+	}
 	return remoteContent == localContent, nil
 }
